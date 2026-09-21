@@ -1,0 +1,57 @@
+{
+  "name": "@dadashi/tree-view-nuxt",
+  "version": "0.1.0",
+  "description": "Nuxt-модуль: подключает @dadashi/tree-view одной строкой",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/module.cjs",
+  "module": "./dist/module.js",
+  "types": "./dist/module.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.js",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "tree",
+    "bracket",
+    "tournament"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dadashi/tree-view": "^0.1.0",
+    "@nuxt/kit": "^3.14.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.2",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dadashi44/tree-view.git",
+    "directory": "packages/nuxt"
+  },
+  "homepage": "https://github.com/dadashi44/tree-view#readme",
+  "bugs": {
+    "url": "https://github.com/dadashi44/tree-view/issues"
+  },
+  "author": "Daniyar Kudaibergenev",
+  "publishConfig": {
+    "access": "public"
+  }
+}
