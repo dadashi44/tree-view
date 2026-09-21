@@ -1,0 +1,29 @@
+{
+  "name": "tree-view-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Монорепозиторий библиотеки @dadashi/tree-view",
+  "workspaces": [
+    "packages/core",
+    "packages/vue3",
+    "packages/vue2",
+    "packages/nuxt",
+    "playground"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace playground",
+    "build": "npm run build --workspace @dadashi/tree-view-core && npm run build --workspace @dadashi/tree-view && npm run build --workspace @dadashi/tree-view-vue2 && npm run build --workspace @dadashi/tree-view-nuxt",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check:packaging": "node scripts/check-packaging.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run check:packaging"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dadashi44/tree-view.git"
+  }
+}
