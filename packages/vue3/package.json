@@ -1,0 +1,68 @@
+{
+  "name": "@dadashi/tree-view",
+  "version": "0.1.0",
+  "description": "Компонент дерева и турнирных сеток для Vue 3",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "tree",
+    "bracket",
+    "tournament",
+    "diagram"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dadashi/tree-view-core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^15.11.7",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.2",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^3.2.4",
+    "vue": "^3.5.18",
+    "vue-tsc": "^3.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dadashi44/tree-view.git",
+    "directory": "packages/vue3"
+  },
+  "homepage": "https://github.com/dadashi44/tree-view#readme",
+  "bugs": {
+    "url": "https://github.com/dadashi44/tree-view/issues"
+  },
+  "author": "Daniyar Kudaibergenev",
+  "publishConfig": {
+    "access": "public"
+  }
+}
