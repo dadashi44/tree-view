@@ -1,0 +1,260 @@
+/*
+ * Стили сетки перенесены из clientFrontend (там они написаны на Tailwind).
+ * Здесь это обычный CSS — чтобы песочница не тянула лишних зависимостей,
+ * а вёрстка карточек осталась ровно такой же, как в проде.
+ */
+
+:root {
+  --accent: #0427c4;
+  --accent-dark: #00146c;
+  --loser-bg: #e5e5e5;
+  --loser-text: #7d7d8d;
+  --page-bg: #ffffff;
+  --rounds-bg: #f5f5f7;
+  --border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #141934;
+  background: var(--page-bg);
+}
+
+.page {
+  padding: 16px 24px 48px;
+}
+
+.page__title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.page__subtitle {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--loser-text);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0 20px;
+  font-size: 14px;
+}
+
+.toolbar label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.toolbar select,
+.toolbar button {
+  padding: 6px 10px;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.toolbar button {
+  cursor: pointer;
+}
+
+/* ── Секция сетки ───────────────────────────────────────────── */
+
+.grid-section {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.grid-section + .grid-section {
+  padding-top: 24px;
+  border-top: 4px solid #d1d5db;
+}
+
+.grid-section__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* Горизонтальный скролл: сетка шире экрана — это нормально. */
+.grid-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.rounds {
+  display: flex;
+  background: var(--rounds-bg);
+  border-bottom: 2px solid var(--border);
+}
+
+.round-item {
+  flex: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-right: 2px solid var(--border);
+}
+
+/* ── Карточка матча ─────────────────────────────────────────── */
+
+.match {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-size: 12px;
+}
+
+.match--my-team {
+  border-radius: 6px;
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 0;
+}
+
+.match__hint {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  padding: 3px 8px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--accent-dark);
+  border-radius: 6px 6px 0 0;
+}
+
+.match__team {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 75ms;
+}
+
+.match__team--winner {
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+}
+
+.match__team--loser {
+  color: var(--loser-text);
+  background: var(--loser-bg);
+}
+
+.match__team--my {
+  color: #fff;
+  background: var(--accent-dark);
+}
+
+.match__team--empty {
+  cursor: default;
+  background: var(--loser-bg);
+}
+
+.match__name {
+  max-width: 120px;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match__score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-weight: 700;
+}
+
+.match__tooltip {
+  position: absolute;
+  top: -26px;
+  left: 6px;
+  z-index: 5000;
+  padding: 4px 8px;
+  font-weight: 400;
+  color: var(--loser-text);
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgb(15 23 42 / 15%);
+}
+
+/* ── Модалка матча ──────────────────────────────────────────── */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15 23 42 / 45%);
+}
+
+.modal__body {
+  width: 320px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.modal__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal__row--winner {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.modal__close {
+  width: 100%;
+  margin-top: 16px;
+  padding: 8px;
+  font: inherit;
+  color: #fff;
+  cursor: pointer;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+}
