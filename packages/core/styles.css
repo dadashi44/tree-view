@@ -1,0 +1,102 @@
+/*
+ * Стили намеренно простые и без !important — любой из них легко перебить.
+ * Настройка внешнего вида — через CSS-переменные ниже.
+ */
+
+.tree-view {
+  /* Цвета и размеры, которые можно переопределить у себя в проекте. */
+  --tv-link-color: #cbd5e1;
+  --tv-link-width: 2px;
+  --tv-node-bg: #ffffff;
+  --tv-node-color: #0f172a;
+  --tv-node-border: 1px solid #e2e8f0;
+  --tv-node-radius: 10px;
+  --tv-node-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  --tv-node-padding: 8px 12px;
+  --tv-accent: #2563eb;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Без этого мобильный браузер сам скроллит страницу вместо перетаскивания. */
+  touch-action: none;
+}
+
+.tree-view--pannable {
+  cursor: grab;
+}
+
+/* size="content": размер задаётся инлайном, ничего не обрезаем. */
+.tree-view--content {
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+/* Холст с деревом: его двигает и масштабирует transform. */
+.tree-view__canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.tree-view__links {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tree-view__link {
+  fill: none;
+  stroke: var(--tv-link-color);
+  stroke-width: var(--tv-link-width);
+}
+
+.tree-view__node {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* Карточка по умолчанию. Если используете слот #node — она не рисуется вовсе. */
+.tree-view-card {
+  box-sizing: border-box;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: var(--tv-node-padding);
+  overflow: hidden;
+  color: var(--tv-node-color);
+  background: var(--tv-node-bg);
+  border: var(--tv-node-border);
+  border-radius: var(--tv-node-radius);
+  box-shadow: var(--tv-node-shadow);
+}
+
+.tree-view-card__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-view-card__toggle {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--tv-accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
