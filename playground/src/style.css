@@ -118,7 +118,11 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Ячейки центрируем по высоте: у финала строка одна, а бокс узла рассчитан
+     на две — без этого карточка «съезжает» вверх относительно линии. */
+  justify-content: center;
   width: 100%;
+  height: 100%;
   font-size: 12px;
 }
 
