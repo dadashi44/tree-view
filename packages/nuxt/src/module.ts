@@ -1,4 +1,7 @@
 import { addComponent, defineNuxtModule } from '@nuxt/kit'
+// Типы параметров указываем явно: в чистом дереве node_modules типы @nuxt/kit
+// могут не доехать до @nuxt/schema и молча превратиться в any — а с ними и setup.
+import type { Nuxt } from '@nuxt/schema'
 
 export interface ModuleOptions {
   /** Префикс к именам компонентов: `prefix: 'App'` даст `<AppTreeView />`. */
@@ -21,7 +24,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     prefix: '',
   },
-  setup(options, nuxt) {
+  setup(options: ModuleOptions, nuxt: Nuxt) {
     const prefix = options.prefix ?? ''
 
     nuxt.options.build.transpile.push('@bigplay/tree-view')
