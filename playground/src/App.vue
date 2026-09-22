@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import BracketGrid from './components/BracketGrid.vue'
 import BountyGrid from './components/BountyGrid.vue'
+import StressGrid from './components/StressGrid.vue'
 import { lowerGrid, upperGrid } from './data/tournament'
 import { bountyGrid } from './data/bounty'
 import type { BracketMatch, BracketTeam } from './data/buildBracket'
@@ -12,6 +13,7 @@ const gridTypes = [
   { id: 'single', name: 'Single elimination' },
   { id: 'double', name: 'Double elimination' },
   { id: 'bounty', name: 'Bounty' },
+  { id: 'stress', name: 'Нагрузка' },
 ] as const
 
 type GridType = (typeof gridTypes)[number]['id']
@@ -66,7 +68,7 @@ function onGroupSelect(node: BountyNode, team: BountyNodeTeam) {
     </div>
 
     <div class="toolbar">
-      <label v-if="gridType !== 'bounty'">
+      <label v-if="gridType === 'single' || gridType === 'double'">
         Формат данных
         <select v-model="format">
           <option value="flat">плоский список из API</option>
@@ -74,7 +76,7 @@ function onGroupSelect(node: BountyNode, team: BountyNodeTeam) {
         </select>
       </label>
 
-      <label>
+      <label v-if="gridType !== 'stress'">
         <input v-model="interactive" type="checkbox" />
         интерактивный режим (перетаскивание и зум)
       </label>
@@ -109,7 +111,15 @@ function onGroupSelect(node: BountyNode, team: BountyNodeTeam) {
     </template>
 
     <!-- Bounty: узел — группа команд, связи выводятся по позиции в раунде. -->
-    <BountyGrid v-else :rounds="bountyGrid" :interactive="interactive" @select="onGroupSelect" />
+    <BountyGrid
+      v-else-if="gridType === 'bounty'"
+      :rounds="bountyGrid"
+      :interactive="interactive"
+      @select="onGroupSelect"
+    />
+
+    <!-- Нагрузка: сетка на сотни и тысячи матчей, со своими замерами. -->
+    <StressGrid v-else />
 
     <!-- Упрощённая модалка: в проде здесь MatchDetailModal с запросом за деталями. -->
     <div v-if="selected" class="modal" @click.self="selected = null">
