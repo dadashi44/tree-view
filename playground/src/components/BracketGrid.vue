@@ -4,8 +4,7 @@
  * Точно такая же конструкция используется на странице турнира в clientFrontend.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { TreeView, type TreeViewOptions } from '@bigplay/tree-view'
-import MatchCard from './MatchCard.vue'
+import { BracketCard, TreeView, bracketCardHeight, type TreeViewOptions } from '@bigplay/tree-view'
 import { toFlatMatches, toTreeMatches, type BracketMatch, type BracketTeam } from '../data/buildBracket'
 import type { ApiGrid } from '../data/tournament'
 
@@ -23,9 +22,16 @@ const emit = defineEmits<{ (e: 'select', match: BracketMatch, team: BracketTeam)
 /** Ширина колонки раунда = карточка + промежуток между уровнями. */
 const COLUMN_WIDTH = 250
 
-const options: TreeViewOptions = {
+const isFinal = (match: BracketMatch) => match.nextId == null
+
+/** Сколько строк в карточке: у финала победитель один. */
+const rowsOf = (match: BracketMatch) => (isFinal(match) ? 1 : 2)
+
+const options: TreeViewOptions<BracketMatch> = {
   nodeWidth: 211,
-  nodeHeight: 80,
+  // Высота — по числу строк карточки: финал ровно в одну строку,
+  // остальные матчи в две. Линия всё равно придёт в середину карточки.
+  nodeHeight: (node) => bracketCardHeight(node.data, { rows: rowsOf(node.data) }),
   levelGap: COLUMN_WIDTH - 211,
   siblingGap: 32,
   direction: 'right-to-left',
@@ -38,8 +44,6 @@ const data = computed(() => (props.format === 'flat' ? toFlatMatches(props.grid)
 const getParentId = computed(() =>
   props.format === 'flat' ? (match: BracketMatch) => match.nextId : undefined,
 )
-
-const isFinal = (match: BracketMatch) => match.nextId == null
 
 const tree = ref<{ fit: () => void } | null>(null)
 
@@ -84,10 +88,11 @@ watch(
         :style="interactive ? { height: '520px' } : undefined"
       >
         <template #node="{ data: match }">
-          <MatchCard
+          <!-- Карточка из пакета: та же вёрстка, что в админке и на клиенте. -->
+          <BracketCard
             :match="match as BracketMatch"
-            :is-final="isFinal(match as BracketMatch)"
-            @select="emit('select', match as BracketMatch, $event)"
+            :rows="rowsOf(match as BracketMatch)"
+            @select="emit('select', match as BracketMatch, $event as BracketTeam)"
           />
         </template>
       </TreeView>

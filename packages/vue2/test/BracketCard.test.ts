@@ -1,0 +1,74 @@
+import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
+import BracketCard from '../src/BracketCard'
+
+const match = {
+  teams: [
+    { id: 1, name: 'W1NGS', score: 2, isWinner: true },
+    { id: 2, name: 'Unravel Her', score: 1 },
+  ],
+}
+
+describe('BracketCard (Vue 2)', () => {
+  it('рисует по строке на команду с именем и счётом', () => {
+    const rows = mount(BracketCard, { propsData: { match } }).findAll('.tv-bracket__row')
+
+    expect(rows).toHaveLength(2)
+    expect(rows.at(0).text()).toContain('W1NGS')
+    expect(rows.at(0).text()).toContain('2')
+  })
+
+  it('классы строк такие же, как в Vue 3', () => {
+    const rows = mount(BracketCard, { propsData: { match } }).findAll('.tv-bracket__row')
+
+    expect(rows.at(0).classes()).toContain('tv-bracket__row--winner')
+    expect(rows.at(1).classes()).toContain('tv-bracket__row--loser')
+  })
+
+  it('несыгранный матч показывает пустые ячейки', () => {
+    const wrapper = mount(BracketCard, { propsData: { match: { teams: [] } } })
+
+    expect(wrapper.findAll('.tv-bracket__row--empty')).toHaveLength(2)
+  })
+
+  it('у финала можно оставить одну строку', () => {
+    const wrapper = mount(BracketCard, { propsData: { match: { teams: [] }, rows: 1 } })
+
+    expect(wrapper.findAll('.tv-bracket__row')).toHaveLength(1)
+  })
+
+  it('моя команда: рамка и подсказка над карточкой', () => {
+    const wrapper = mount(BracketCard, {
+      propsData: { match: { teams: [{ id: 1, name: 'A', isMyTeam: true }] } },
+    })
+
+    expect(wrapper.classes()).toContain('tv-bracket--my-team')
+    expect(wrapper.find('.tv-bracket__hint').text()).toBe('Нажми для перехода в матч 👇')
+  })
+
+  it('техническое поражение: «ТП» и подсказка по наведению', async () => {
+    const wrapper = mount(BracketCard, {
+      propsData: { match: { teams: [{ id: 1, name: 'A', score: 0, isTechDefeat: true }] } },
+    })
+    const row = wrapper.find('.tv-bracket__row')
+
+    expect(row.text()).toContain('ТП')
+
+    await row.trigger('mouseenter')
+    expect(wrapper.find('.tv-bracket__tooltip').text()).toBe('Техническое поражение')
+  })
+
+  it('клик по команде отдаёт её наружу', async () => {
+    const wrapper = mount(BracketCard, { propsData: { match } })
+    await wrapper.findAll('.tv-bracket__row').at(1).trigger('click')
+
+    expect(wrapper.emitted('select')![0]![0]).toMatchObject({ id: 2, name: 'Unravel Her' })
+  })
+
+  it('клик по пустой ячейке ничего не отправляет', async () => {
+    const wrapper = mount(BracketCard, { propsData: { match: { teams: [] } } })
+    await wrapper.find('.tv-bracket__row').trigger('click')
+
+    expect(wrapper.emitted('select')).toBeUndefined()
+  })
+})

@@ -18,9 +18,17 @@ const emit = defineEmits<{ (e: 'select', node: BountyNode, team: BountyNodeTeam)
 
 const COLUMN_WIDTH = 260
 
-const options: TreeViewOptions = {
+/** Из чего складывается высота карточки группы: подпись + строки команд. */
+const NAME_HEIGHT = 20
+const TEAM_HEIGHT = 38
+const TEAM_GAP = 1
+
+const options: TreeViewOptions<BountyNode> = {
   nodeWidth: 200,
-  nodeHeight: 94,
+  // Групп с разным числом команд в данных пока нет, но высота считается
+  // честно — сетка не поедет, если такая группа появится.
+  nodeHeight: (node) =>
+    NAME_HEIGHT + node.data.teams.length * TEAM_HEIGHT + Math.max(0, node.data.teams.length - 1) * TEAM_GAP,
   levelGap: COLUMN_WIDTH - 200,
   siblingGap: 26,
   direction: 'right-to-left',
