@@ -33,13 +33,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      # В Node 20 приезжает npm 10, а доверенная публикация появилась в 11.5.1.
+      # Доверенная публикация появилась в npm 11.5.1, а с Node приезжает npm 10.
+      # Мажор пинуем: npm@latest уже ушёл на 12, которому нужен ещё более свежий Node.
       - name: Свежий npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Установка зависимостей
         run: npm ci
