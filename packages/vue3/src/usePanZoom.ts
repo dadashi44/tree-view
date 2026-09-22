@@ -5,7 +5,7 @@ import {
   type ScaleLimits,
   type Size,
   type Transform,
-} from '@dadashi44/tree-view-core'
+} from '@bigplay/tree-view-core'
 
 export interface UsePanZoomParams {
   /** Элемент, который слушаем: по нему тянут и крутят колесо. */

@@ -5,10 +5,10 @@
 
 ```
 packages/
-  core   — @dadashi44/tree-view-core        чистый TypeScript: раскладка, линии, зум. Ни строчки Vue
-  vue3   — @dadashi44/tree-view             компонент для Vue 3
-  vue2   — @dadashi44/tree-view-vue2        компонент для Vue 2.6 / 2.7
-  nuxt   — @dadashi44/tree-view-nuxt        модуль Nuxt 3 / 4
+  core   — @bigplay/tree-view-core        чистый TypeScript: раскладка, линии, зум. Ни строчки Vue
+  vue3   — @bigplay/tree-view             компонент для Vue 3
+  vue2   — @bigplay/tree-view-vue2        компонент для Vue 2.6 / 2.7
+  nuxt   — @bigplay/tree-view-nuxt        модуль Nuxt 3 / 4
 playground — песочница на Vite: три типа сеток с данными и вёрсткой из clientFrontend
 ```
 
@@ -20,13 +20,13 @@ playground — песочница на Vite: три типа сеток с да�
 
 ```bash
 # Vue 3
-npm i @dadashi44/tree-view
+npm i @bigplay/tree-view
 
 # Vue 2.6 / 2.7
-npm i @dadashi44/tree-view-vue2
+npm i @bigplay/tree-view-vue2
 
 # Nuxt 3 / 4
-npm i @dadashi44/tree-view-nuxt
+npm i @bigplay/tree-view-nuxt
 ```
 
 ## Быстрый старт
@@ -35,7 +35,7 @@ npm i @dadashi44/tree-view-nuxt
 
 ```vue
 <script setup>
-import { TreeView } from '@dadashi44/tree-view'
+import { TreeView } from '@bigplay/tree-view'
 
 const data = {
   id: 'final',
@@ -59,7 +59,7 @@ const data = {
 
 ```js
 import Vue from 'vue'
-import { TreeView } from '@dadashi44/tree-view-vue2'
+import { TreeView } from '@bigplay/tree-view-vue2'
 
 Vue.component('TreeView', TreeView)
 ```
@@ -73,7 +73,7 @@ Vue.component('TreeView', TreeView)
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@dadashi44/tree-view-nuxt'],
+  modules: ['@bigplay/tree-view-nuxt'],
 })
 ```
 
@@ -88,7 +88,7 @@ export default defineNuxtConfig({
 Стили подключать не нужно: они лежат внутри пакета и вставляются в страницу сами
 при первом импорте (на сервере при SSR — ничего не делают, на клиенте появляются при гидрации).
 Если стили нужны файлом (например, для critical CSS), он есть:
-`@dadashi44/tree-view-core/style.css`.
+`@bigplay/tree-view-core/style.css`.
 
 ## Свой внешний вид узла
 
@@ -193,7 +193,7 @@ export default defineNuxtConfig({
 (так устроены bounty-сетки: пары групп раунда сходятся в группу следующего):
 
 ```ts
-import { fromLevels, flatten } from '@dadashi44/tree-view-core'
+import { fromLevels, flatten } from '@bigplay/tree-view-core'
 
 // уровни от первого раунда к финалу
 const roots = fromLevels([round1.groups, round2.groups, final.groups])
@@ -275,7 +275,7 @@ const nodes = flatten(roots).map((node) => ({ ...node.data, id: node.id, parentI
 Если Vue не нужен — считать раскладку можно напрямую:
 
 ```ts
-import { toTree, layoutTree } from '@dadashi44/tree-view-core'
+import { toTree, layoutTree } from '@bigplay/tree-view-core'
 
 const layout = layoutTree(toTree(data), { direction: 'right-to-left' })
 // layout.nodes — координаты карточек, layout.links — готовые SVG-пути, layout.width/height — холст
@@ -354,10 +354,10 @@ core → vue3 → vue2 → nuxt (зависимость должна попас�
 
 ```bash
 npm run verify
-npm publish --workspace @dadashi44/tree-view-core
-npm publish --workspace @dadashi44/tree-view
-npm publish --workspace @dadashi44/tree-view-vue2
-npm publish --workspace @dadashi44/tree-view-nuxt
+npm publish --workspace @bigplay/tree-view-core
+npm publish --workspace @bigplay/tree-view
+npm publish --workspace @bigplay/tree-view-vue2
+npm publish --workspace @bigplay/tree-view-nuxt
 ```
 
 `npm run check:packaging` проверяет, что все пути из `package.json` существуют в `dist` —

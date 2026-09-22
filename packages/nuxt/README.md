@@ -1,16 +1,16 @@
-# @dadashi44/tree-view-nuxt
+# @bigplay/tree-view-nuxt
 
-Модуль Nuxt 3 / 4: подключает [`@dadashi44/tree-view`](https://www.npmjs.com/package/@dadashi44/tree-view)
+Модуль Nuxt 3 / 4: подключает [`@bigplay/tree-view`](https://www.npmjs.com/package/@bigplay/tree-view)
 одной строкой — компоненты регистрируются глобально, стили тоже подключаются сами.
 
 ```bash
-npm i @dadashi44/tree-view-nuxt
+npm i @bigplay/tree-view-nuxt
 ```
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@dadashi44/tree-view-nuxt'],
+  modules: ['@bigplay/tree-view-nuxt'],
 
   // необязательно
   treeView: {

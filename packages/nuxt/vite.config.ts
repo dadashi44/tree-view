@@ -11,7 +11,7 @@ export default defineConfig({
       fileName: (format) => (format === 'es' ? 'module.js' : 'module.cjs'),
     },
     rollupOptions: {
-      external: ['@nuxt/kit', '@dadashi44/tree-view', '@dadashi44/tree-view-core'],
+      external: ['@nuxt/kit', '@bigplay/tree-view', '@bigplay/tree-view-core'],
     },
   },
 })

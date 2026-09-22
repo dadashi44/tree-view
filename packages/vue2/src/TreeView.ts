@@ -12,7 +12,7 @@ import {
   type ScaleLimits,
   type Transform,
   type TreeViewOptions,
-} from '@dadashi44/tree-view-core'
+} from '@bigplay/tree-view-core'
 import TreeNodeCard from './TreeNodeCard'
 
 /** Данные узла могут быть какими угодно — библиотека читает их только аксессорами. */

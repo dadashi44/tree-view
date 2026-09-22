@@ -10,7 +10,7 @@ describe('injectStyles', () => {
   it('добавляет тег style с переданным CSS', () => {
     injectStyles('.a { color: red }')
 
-    const style = document.getElementById('dadashi-tree-view-styles')
+    const style = document.getElementById('tree-view-styles')
     expect(style?.tagName).toBe('STYLE')
     expect(style?.textContent).toBe('.a { color: red }')
   })

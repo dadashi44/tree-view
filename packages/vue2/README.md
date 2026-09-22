@@ -1,16 +1,16 @@
-# @dadashi44/tree-view-vue2
+# @bigplay/tree-view-vue2
 
 Дерево и турнирные сетки для Vue 2.6 / 2.7. Тот же компонент, что и
-[`@dadashi44/tree-view`](https://www.npmjs.com/package/@dadashi44/tree-view) для Vue 3:
+[`@bigplay/tree-view`](https://www.npmjs.com/package/@bigplay/tree-view) для Vue 3:
 общий core, одинаковые пропы, события и классы стилей.
 
 ```bash
-npm i @dadashi44/tree-view-vue2
+npm i @bigplay/tree-view-vue2
 ```
 
 ```js
 import Vue from 'vue'
-import { TreeView } from '@dadashi44/tree-view-vue2'
+import { TreeView } from '@bigplay/tree-view-vue2'
 
 Vue.component('TreeView', TreeView)
 ```

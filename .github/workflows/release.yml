@@ -31,21 +31,21 @@ jobs:
       # Порядок важен: пакеты ссылаются друг на друга,
       # зависимость должна попасть в реестр раньше зависящего.
       - name: Публикация core
-        run: npm publish --workspace @dadashi44/tree-view-core
+        run: npm publish --workspace @bigplay/tree-view-core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Vue 3
-        run: npm publish --workspace @dadashi44/tree-view
+        run: npm publish --workspace @bigplay/tree-view
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Vue 2
-        run: npm publish --workspace @dadashi44/tree-view-vue2
+        run: npm publish --workspace @bigplay/tree-view-vue2
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Nuxt-модуля
-        run: npm publish --workspace @dadashi44/tree-view-nuxt
+        run: npm publish --workspace @bigplay/tree-view-nuxt
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,7 +1,7 @@
 {
-  "name": "@dadashi44/tree-view-nuxt",
+  "name": "@bigplay/tree-view-nuxt",
   "version": "0.1.0",
-  "description": "Nuxt-модуль: подключает @dadashi44/tree-view одной строкой",
+  "description": "Nuxt-модуль: подключает @bigplay/tree-view одной строкой",
   "license": "MIT",
   "type": "module",
   "files": [
@@ -29,7 +29,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@dadashi44/tree-view": "^0.1.0",
+    "@bigplay/tree-view": "^0.1.0",
     "@nuxt/kit": "^3.14.0"
   },
   "peerDependencies": {
