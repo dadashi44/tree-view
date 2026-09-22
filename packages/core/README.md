@@ -22,6 +22,7 @@ layout.height
 | Функция | Зачем |
 | --- | --- |
 | `toTree(data, accessors)` | любой формат (вложенный или плоский) → дерево с `id` и `depth` |
+| `fromLevels(levels)` | дерево из уровней, когда связи заданы позицией, а не ссылками |
 | `applyCollapsed(roots, ids)` | убирает детей свёрнутых узлов, не меняя исходные данные |
 | `layoutTree(roots, options)` | координаты узлов и линии |
 | `buildPath(from, to, style, direction)` | SVG-путь: `elbow`, `curve`, `straight` |

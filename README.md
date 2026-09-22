@@ -9,7 +9,7 @@ packages/
   vue3   — @dadashi/tree-view             компонент для Vue 3
   vue2   — @dadashi/tree-view-vue2        компонент для Vue 2.6 / 2.7
   nuxt   — @dadashi/tree-view-nuxt        модуль Nuxt 3 / 4
-playground — песочница на Vite: турнирная сетка с данными и вёрсткой из clientFrontend
+playground — песочница на Vite: три типа сеток с данными и вёрсткой из clientFrontend
 ```
 
 Зависимостей нет вообще: d3 не нужен, раскладка — своя (≈100 строк).
@@ -189,6 +189,19 @@ export default defineNuxtConfig({
 />
 ```
 
+**Уровнями, без ссылок на родителя** — когда связи заданы только позицией
+(так устроены bounty-сетки: пары групп раунда сходятся в группу следующего):
+
+```ts
+import { fromLevels, flatten } from '@dadashi/tree-view-core'
+
+// уровни от первого раунда к финалу
+const roots = fromLevels([round1.groups, round2.groups, final.groups])
+
+// дальше это обычный плоский список для компонента
+const nodes = flatten(roots).map((node) => ({ ...node.data, id: node.id, parentId: node.parentId }))
+```
+
 Несколько корней (несколько деревьев рядом) поддерживаются — просто передайте массив.
 Если `id` нет вовсе, он берётся из пути в дереве (`"0.1.2"`) и остаётся стабильным между перерисовками.
 
@@ -311,7 +324,7 @@ npm run build        # сборка всех пакетов
 npm run verify       # всё вместе + проверка упаковки перед публикацией
 ```
 
-Тесты: 115 штук — раскладка и нормализация данных в core, поведение компонентов
+Тесты: 126 штук — раскладка и нормализация данных в core, поведение компонентов
 в vue3 и vue2 (@vue/test-utils + happy-dom).
 
 ## Публикация
