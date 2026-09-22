@@ -5,8 +5,10 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import {
+  DEFAULT_OVERSCAN,
   DEFAULT_SCALE_LIMITS,
   toCssTransform,
+  visibleLayout,
   type Accessors,
   type LayoutNode,
   type ScaleLimits,
@@ -16,6 +18,7 @@ import {
 import TreeNodeCard from './TreeNodeCard.vue'
 import { usePanZoom } from './usePanZoom'
 import { useTreeLayout } from './useTreeLayout'
+import { useVisibleRect } from './useVisibleRect'
 
 const props = withDefaults(
   defineProps<{
@@ -49,6 +52,14 @@ const props = withDefaults(
     scaleLimits?: ScaleLimits
     /** Дополнительный класс на обёртке узла — строкой или функцией. */
     nodeClass?: string | ((node: LayoutNode<T>) => string)
+    /**
+     * Рисовать только то, что видно на экране. На больших сетках это
+     * главная экономия: в DOM попадает несколько десятков карточек
+     * вместо тысячи. На маленьких деревьях ничего не меняет.
+     */
+    virtualize?: boolean
+    /** Запас вокруг видимой области в пикселях. */
+    overscan?: number
   }>(),
   {
     options: undefined,
@@ -62,6 +73,8 @@ const props = withDefaults(
     size: 'fill',
     scaleLimits: undefined,
     nodeClass: undefined,
+    virtualize: true,
+    overscan: DEFAULT_OVERSCAN,
   },
 )
 
@@ -72,6 +85,7 @@ const emit = defineEmits<{
 }>()
 
 const rootElement = ref<HTMLElement | null>(null)
+const canvasElement = ref<HTMLElement | null>(null)
 
 const { layout, isCollapsed, toggle, expandAll } = useTreeLayout<T>({
   data: () => props.data,
@@ -89,6 +103,17 @@ const panZoom = usePanZoom({
   zoomable: () => props.zoomable,
   limits: () => props.scaleLimits ?? DEFAULT_SCALE_LIMITS,
 })
+
+const visible = useVisibleRect(
+  canvasElement,
+  () => panZoom.transform.value.scale,
+  () => props.virtualize,
+)
+
+/** То, что реально попадёт в DOM: при `virtualize` — только видимая часть. */
+const drawn = computed(() =>
+  props.virtualize ? visibleLayout(layout.value, visible.rect.value, props.overscan) : layout.value,
+)
 
 const canvasStyle = computed(() => ({
   width: `${layout.value.width}px`,
@@ -147,8 +172,15 @@ onMounted(() => {
 
 watch(
   () => panZoom.transform.value,
-  (transform) => emit('transform', transform),
+  (transform) => {
+    // Холст поехал — видимая часть стала другой.
+    visible.update()
+    emit('transform', transform)
+  },
 )
+
+// Новые данные — и пересчитывать видимую часть надо уже по ним.
+watch(layout, () => void nextTick(() => visible.update()))
 
 defineExpose({
   fit,
@@ -170,9 +202,9 @@ defineExpose({
     :class="{ 'tree-view--pannable': pannable, 'tree-view--content': size === 'content' }"
     :style="rootStyle"
   >
-    <div class="tree-view__canvas" :style="canvasStyle">
+    <div ref="canvasElement" class="tree-view__canvas" :style="canvasStyle">
       <svg class="tree-view__links" :width="layout.width" :height="layout.height">
-        <template v-for="link in layout.links" :key="link.id">
+        <template v-for="link in drawn.links" :key="link.id">
           <slot name="link" :link="link">
             <path class="tree-view__link" :d="link.path" />
           </slot>
@@ -180,7 +212,7 @@ defineExpose({
       </svg>
 
       <div
-        v-for="node in layout.nodes"
+        v-for="node in drawn.nodes"
         :key="node.id"
         class="tree-view__node"
         :class="nodeClassOf(node)"

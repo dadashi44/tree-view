@@ -156,3 +156,71 @@ describe('TreeView (Vue 2) — поведение', () => {
     expect(wrapper.classes()).toContain('tree-view--content')
   })
 })
+
+describe('TreeView (Vue 2) — виртуализация', () => {
+  const many = Array.from({ length: 200 }, (_, index) => ({ id: `n-${index}`, name: `Узел ${index}` }))
+  const bigOptions = { nodeWidth: 100, nodeHeight: 50, levelGap: 50, siblingGap: 20 }
+
+  /** Холст «виден» вот в таком прямоугольнике — happy-dom сам размеров не считает. */
+  function stubViewport(box: { left: number; top: number; width: number; height: number }) {
+    const original = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function rect() {
+      return {
+        left: box.left,
+        top: box.top,
+        right: box.left + box.width,
+        bottom: box.top + box.height,
+        width: box.width,
+        height: box.height,
+        x: box.left,
+        y: box.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    }
+    return () => {
+      Element.prototype.getBoundingClientRect = original
+    }
+  }
+
+  it('рисует только видимую часть большого дерева', () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, { propsData: { data: many, options: bigOptions, fitOnMount: false } })
+    const drawn = wrapper.findAll('.tree-view__node').length
+
+    expect(drawn).toBeGreaterThan(0)
+    expect(drawn).toBeLessThan(many.length)
+
+    restore()
+  })
+
+  it('с virtualize: false рисует всё', () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, {
+      propsData: { data: many, options: bigOptions, fitOnMount: false, virtualize: false },
+    })
+
+    expect(wrapper.findAll('.tree-view__node')).toHaveLength(many.length)
+
+    restore()
+  })
+
+  it('маленькое дерево рисуется целиком, фильтр не включается', () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 1, height: 1 })
+
+    expect(mountTree().findAll('.tree-view__node')).toHaveLength(3)
+
+    restore()
+  })
+
+  it('размер холста остаётся полным, а не по видимой части', () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, { propsData: { data: many, options: bigOptions, fitOnMount: false } })
+
+    expect(wrapper.find('.tree-view__canvas').attributes('style')).toContain('width: 23980px')
+
+    restore()
+  })
+})

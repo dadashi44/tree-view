@@ -242,3 +242,101 @@ describe('TreeView — холст', () => {
     expect(mountTree({ pannable: false }).classes()).not.toContain('tree-view--pannable')
   })
 })
+
+describe('TreeView — виртуализация', () => {
+  /** Плоский список из 200 корней: заведомо больше порога виртуализации. */
+  const many = Array.from({ length: 200 }, (_, index) => ({ id: `n-${index}`, name: `Узел ${index}` }))
+
+  const bigOptions = { nodeWidth: 100, nodeHeight: 50, levelGap: 50, siblingGap: 20 }
+
+  /** Холст «виден» вот в таком прямоугольнике — happy-dom сам размеров не считает. */
+  function stubViewport(box: { left: number; top: number; width: number; height: number }) {
+    const original = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function rect() {
+      return {
+        left: box.left,
+        top: box.top,
+        right: box.left + box.width,
+        bottom: box.top + box.height,
+        width: box.width,
+        height: box.height,
+        x: box.left,
+        y: box.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    }
+    return () => {
+      Element.prototype.getBoundingClientRect = original
+    }
+  }
+
+  it('рисует только видимую часть большого дерева', async () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, { props: { data: many, options: bigOptions, fitOnMount: false } })
+    await nextTick()
+    const drawn = wrapper.findAll('.tree-view__node').length
+
+    expect(drawn).toBeGreaterThan(0)
+    expect(drawn).toBeLessThan(many.length)
+
+    restore()
+  })
+
+  it('с virtualize: false рисует всё', async () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, {
+      props: { data: many, options: bigOptions, fitOnMount: false, virtualize: false },
+    })
+    await nextTick()
+
+    expect(wrapper.findAll('.tree-view__node')).toHaveLength(many.length)
+
+    restore()
+  })
+
+  it('маленькое дерево рисуется целиком, фильтр не включается', async () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 1, height: 1 })
+
+    const wrapper = mountTree()
+    await nextTick()
+
+    expect(wrapper.findAll('.tree-view__node')).toHaveLength(3)
+
+    restore()
+  })
+
+  it('при скролле страницы в DOM попадают другие узлы', async () => {
+    let restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, { props: { data: many, options: bigOptions, fitOnMount: false } })
+    await nextTick()
+    const before = wrapper.findAll('.tree-view__node').map((node) => node.attributes('style'))
+
+    // Холст уехал влево — значит, видно уже другую его часть.
+    restore()
+    restore = stubViewport({ left: -5000, top: 0, width: 24000, height: 400 })
+    window.dispatchEvent(new Event('scroll'))
+    await nextTick()
+
+    const after = wrapper.findAll('.tree-view__node').map((node) => node.attributes('style'))
+
+    expect(after).not.toEqual(before)
+    expect(after.length).toBeGreaterThan(0)
+
+    restore()
+  })
+
+  it('размер холста остаётся полным, а не по видимой части', async () => {
+    const restore = stubViewport({ left: 0, top: 0, width: 600, height: 400 })
+
+    const wrapper = mount(TreeView, { props: { data: many, options: bigOptions, fitOnMount: false } })
+    await nextTick()
+
+    // 200 узлов: 199 шагов по 120px плюс ширина последней карточки.
+    expect(wrapper.find('.tree-view__canvas').attributes('style')).toContain('width: 23980px')
+
+    restore()
+  })
+})

@@ -1,14 +1,19 @@
 import Vue, { type PropType, type VNode } from 'vue'
 import {
   applyCollapsed,
+  DEFAULT_OVERSCAN,
+  estimateVisibleRect,
   layoutTree,
+  measureVisibleRect,
   PanZoomController,
   toCssTransform,
   toggleCollapsed,
   toTree,
+  visibleLayout,
   type Accessors,
   type Layout,
   type LayoutNode,
+  type Rect,
   type ScaleLimits,
   type Transform,
   type TreeViewOptions,
@@ -58,6 +63,13 @@ export default Vue.extend({
       type: [String, Function] as PropType<string | ((node: LayoutNode<NodeData>) => string)>,
       default: undefined,
     },
+    /**
+     * Рисовать только то, что видно на экране. На больших сетках в DOM
+     * попадает несколько десятков карточек вместо тысячи.
+     */
+    virtualize: { type: Boolean, default: true },
+    /** Запас вокруг видимой области в пикселях. */
+    overscan: { type: Number, default: DEFAULT_OVERSCAN },
   },
 
   data() {
@@ -65,6 +77,12 @@ export default Vue.extend({
       /** Массив, а не Set: Vue 2 не умеет наблюдать за Set. */
       collapsedIds: [] as string[],
       transform: { x: 0, y: 0, scale: 1 } as Transform,
+      /**
+       * Видимая часть холста; `null` — рисуем всё.
+       * До первого измерения берём размер окна: иначе первый кадр
+       * нарисует дерево целиком и тут же выбросит лишнее.
+       */
+      visibleRect: (this.virtualize ? estimateVisibleRect() : null) as Rect | null,
     }
   },
 
@@ -77,6 +95,11 @@ export default Vue.extend({
       })
 
       return layoutTree(applyCollapsed(tree, new Set(this.collapsedIds)), this.options)
+    },
+
+    /** То, что реально попадёт в DOM: при `virtualize` — только видимая часть. */
+    drawn(): Layout<NodeData> {
+      return this.virtualize ? visibleLayout(this.layout, this.visibleRect, this.overscan) : this.layout
     },
 
     canvasStyle(): Record<string, string> {
@@ -98,6 +121,13 @@ export default Vue.extend({
     },
   },
 
+  watch: {
+    // Новые данные — видимую часть надо пересчитать уже по ним.
+    layout() {
+      this.$nextTick(() => this.updateVisibleRect())
+    },
+  },
+
   mounted() {
     const controller = new PanZoomController({
       pannable: () => this.pannable,
@@ -105,6 +135,8 @@ export default Vue.extend({
       limits: this.scaleLimits ? () => this.scaleLimits : undefined,
       onChange: (transform) => {
         this.transform = transform
+        // Холст поехал — видимая часть стала другой.
+        this.updateVisibleRect()
         this.$emit('transform', transform)
       },
     })
@@ -112,15 +144,28 @@ export default Vue.extend({
     controller.attach(this.$el as HTMLElement)
     controllers.set(this, controller)
 
+    this.updateVisibleRect()
+    window.addEventListener('scroll', this.updateVisibleRect, { passive: true, capture: true })
+    window.addEventListener('resize', this.updateVisibleRect, { passive: true })
+
     if (this.fitOnMount) this.$nextTick(() => this.fit())
   },
 
   beforeDestroy() {
     controllers.get(this)?.detach()
     controllers.delete(this)
+    window.removeEventListener('scroll', this.updateVisibleRect, { capture: true } as EventListenerOptions)
+    window.removeEventListener('resize', this.updateVisibleRect)
   },
 
   methods: {
+    /** Пересчитывает, какая часть холста сейчас видна на экране. */
+    updateVisibleRect(): void {
+      this.visibleRect = this.virtualize
+        ? measureVisibleRect(this.$refs.canvas as Element | undefined, this.transform.scale)
+        : null
+    },
+
     /** Вписывает дерево в видимую область. */
     fit(padding?: number): void {
       controllers.get(this)?.fit({ width: this.layout.width, height: this.layout.height }, padding)
@@ -199,15 +244,16 @@ export default Vue.extend({
 
   render(h): VNode {
     const layout = this.layout
+    const drawn = this.drawn
     const linkSlot = this.$scopedSlots.link
 
-    const links = layout.links.map((link) =>
+    const links = drawn.links.map((link) =>
       linkSlot
         ? ((linkSlot({ link }) ?? []) as VNode[])
         : h('path', { key: link.id, class: 'tree-view__link', attrs: { d: link.path } }),
     )
 
-    const nodes = layout.nodes.map((node) =>
+    const nodes = drawn.nodes.map((node) =>
       h(
         'div',
         {
@@ -230,7 +276,7 @@ export default Vue.extend({
         style: this.rootStyle,
       },
       [
-        h('div', { class: 'tree-view__canvas', style: this.canvasStyle }, [
+        h('div', { ref: 'canvas', class: 'tree-view__canvas', style: this.canvasStyle }, [
           h(
             'svg',
             {
