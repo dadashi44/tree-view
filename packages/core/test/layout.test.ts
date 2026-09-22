@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { layoutTree } from '../src/layout'
 import { toTree } from '../src/normalize'
 import type { LayoutNode, TreeViewOptions } from '../src/types'
-import { bracket } from './fixtures'
+import { bracket, type Match } from './fixtures'
 
 /** Удобные круглые числа, чтобы ожидания в тестах считались в уме. */
 const options: Partial<TreeViewOptions> = {
@@ -131,5 +131,78 @@ describe('layoutTree', () => {
 
     expect(layout.nodes[0]!.width).toBe(300)
     expect(layout.nodes[0]!.height).toBe(64)
+  })
+})
+
+describe('размер карточки функцией', () => {
+  /** Типичный случай: у финала одна строка вместо двух. */
+  const halfFinal = (node: { data: Match }) => (node.data.id === 'final' ? 25 : 50)
+
+  it('к каждому узлу применяется свой размер', () => {
+    const layout = layoutTree(toTree(bracket), { ...options, nodeHeight: halfFinal })
+    const nodes = byId(layout.nodes)
+
+    expect(nodes['final']!.height).toBe(25)
+    expect(nodes['sf-1']!.height).toBe(50)
+  })
+
+  it('линия приходит в середину карточки, а не в середину чужого бокса', () => {
+    const layout = layoutTree(toTree(bracket), { ...options, nodeHeight: halfFinal })
+    const nodes = byId(layout.nodes)
+    const final = nodes['final']!
+
+    // Финал на своём уровне один, поэтому стоит в начале полосы.
+    expect(final.y).toBe(0)
+    expect(final.y + final.height / 2).toBe(12.5)
+  })
+
+  it('уровень с низкой карточкой занимает меньше места по высоте', () => {
+    const uniform = layoutTree(toTree(bracket), options)
+    const variable = layoutTree(toTree(bracket), { ...options, nodeHeight: halfFinal })
+
+    // Уровень финала стал тоньше на 25px — на столько же ниже холст.
+    expect(uniform.height - variable.height).toBe(25)
+  })
+
+  it('соседи расступаются под карточки разной высоты', () => {
+    // Горизонтальная сетка: высота карточки — это размер поперёк уровня.
+    const byTeams = (node: { data: Match }) => (node.data.id === 'qf-1' ? 200 : 50)
+    const layout = layoutTree(toTree(bracket), { ...options, direction: 'right-to-left', nodeHeight: byTeams })
+    const nodes = byId(layout.nodes)
+
+    expect(nodes['qf-1']!.y).toBe(0)
+    expect(nodes['qf-1']!.height).toBe(200)
+    // Следующий четвертьфинал начинается за высокой карточкой, а не за её «боксом».
+    expect(nodes['qf-2']!.y).toBe(220)
+  })
+
+  it('карточка шире разлёта детей не залезает на соседнюю ветку', () => {
+    const tree = toTree([
+      { id: 'left' },
+      { id: 'wide', children: [{ id: 'only-child' }] },
+    ])
+    const layout = layoutTree(tree, { ...options, nodeWidth: (node) => (node.data.id === 'wide' ? 400 : 100) })
+    const nodes = byId(layout.nodes)
+
+    expect(nodes['left']!.x).toBe(0)
+    // Ветка целиком уехала вправо: «wide» начинается там, где кончился сосед.
+    expect(nodes['wide']!.x).toBe(120)
+    expect(nodes['only-child']!.x).toBeGreaterThanOrEqual(120)
+    expect(layout.nodes.every((node) => node.x >= 0)).toBe(true)
+  })
+
+  it('функция получает узел целиком: данные, глубину и детей', () => {
+    const seen: Array<{ id: string; depth: number; hasChildren: boolean }> = []
+
+    layoutTree(toTree(bracket), {
+      ...options,
+      nodeHeight: (node) => {
+        seen.push({ id: node.data.id, depth: node.depth, hasChildren: node.hasChildren })
+        return 50
+      },
+    })
+
+    expect(seen).toContainEqual({ id: 'final', depth: 0, hasChildren: true })
+    expect(seen).toContainEqual({ id: 'qf-1', depth: 2, hasChildren: false })
   })
 })

@@ -13,12 +13,20 @@ export type Direction =
 /** Форма соединительной линии между родителем и ребёнком. */
 export type LinkStyle = 'straight' | 'elbow' | 'curve'
 
+/**
+ * Размер карточки: одно число на все узлы или функция от узла.
+ *
+ * Функция нужна, когда карточки разной высоты — например, в сетке
+ * у финала одна строка, а у остальных матчей две.
+ */
+export type NodeSize<T> = number | ((node: TreeNode<T>) => number)
+
 /** Настройки раскладки. Все размеры — в пикселях. */
-export interface TreeViewOptions {
+export interface TreeViewOptions<T = any> {
   /** Ширина карточки узла. */
-  nodeWidth: number
+  nodeWidth: NodeSize<T>
   /** Высота карточки узла. */
-  nodeHeight: number
+  nodeHeight: NodeSize<T>
   /** Пустое место между уровнями (между родителем и детьми). */
   levelGap: number
   /** Пустое место между соседними узлами одного уровня. */

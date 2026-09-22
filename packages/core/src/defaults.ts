@@ -14,6 +14,6 @@ export const DEFAULT_OPTIONS: TreeViewOptions = {
  * Дополняет пользовательские настройки значениями по умолчанию.
  * Благодаря этому можно передать только `{ nodeWidth: 240 }` и ничего не сломать.
  */
-export function resolveOptions(options?: Partial<TreeViewOptions>): TreeViewOptions {
+export function resolveOptions<T>(options?: Partial<TreeViewOptions<T>>): TreeViewOptions<T> {
   return { ...DEFAULT_OPTIONS, ...options }
 }

@@ -12,7 +12,7 @@ import {
 /** Функции-геттеры, чтобы композабл видел свежие значения пропов. */
 export interface UseTreeLayoutParams<T> {
   data: () => T | T[] | null | undefined
-  options: () => Partial<TreeViewOptions> | undefined
+  options: () => Partial<TreeViewOptions<T>> | undefined
   accessors: () => Accessors<T>
 }
 

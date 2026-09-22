@@ -22,7 +22,7 @@ const props = withDefaults(
     /** Данные: объект, массив объектов или плоский список (вместе с `getParentId`). */
     data: T | T[] | null | undefined
     /** Размеры и направление. Можно передать только часть полей. */
-    options?: Partial<TreeViewOptions>
+    options?: Partial<TreeViewOptions<T>>
     /** Как достать id узла. По умолчанию — поле `id`. */
     getId?: Accessors<T>['getId']
     /** Как достать детей. По умолчанию — поле `children`. */
