@@ -4,8 +4,8 @@
     "noEmit": true,
     "types": ["vite/client"],
     "paths": {
-      "@dadashi/tree-view": ["../packages/vue3/src/index.ts"],
-      "@dadashi/tree-view-core": ["../packages/core/src/index.ts"]
+      "@dadashi44/tree-view": ["../packages/vue3/src/index.ts"],
+      "@dadashi44/tree-view-core": ["../packages/core/src/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

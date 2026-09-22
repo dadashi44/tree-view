@@ -4,7 +4,7 @@
  * но связи между группами рисует библиотека, а не вручную свёрстанные палки.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { TreeView, type TreeViewOptions } from '@dadashi/tree-view'
+import { TreeView, type TreeViewOptions } from '@dadashi44/tree-view'
 import BountyGroupCard from './BountyGroupCard.vue'
 import { toBountyNodes, type BountyNode, type BountyNodeTeam } from '../data/buildBounty'
 import type { BountyRound } from '../data/bounty'

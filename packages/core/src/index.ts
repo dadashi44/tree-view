@@ -1,4 +1,4 @@
-/** Публичный API пакета `@dadashi/tree-view-core`. */
+/** Публичный API пакета `@dadashi44/tree-view-core`. */
 export * from './types'
 export { DEFAULT_OPTIONS, resolveOptions } from './defaults'
 export { toTree, type Accessors } from './normalize'

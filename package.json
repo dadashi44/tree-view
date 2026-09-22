@@ -2,7 +2,7 @@
   "name": "tree-view-monorepo",
   "private": true,
   "version": "0.0.0",
-  "description": "Монорепозиторий библиотеки @dadashi/tree-view",
+  "description": "Монорепозиторий библиотеки @dadashi44/tree-view",
   "workspaces": [
     "packages/core",
     "packages/vue3",
@@ -12,11 +12,12 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace playground",
-    "build": "npm run build --workspace @dadashi/tree-view-core && npm run build --workspace @dadashi/tree-view && npm run build --workspace @dadashi/tree-view-vue2 && npm run build --workspace @dadashi/tree-view-nuxt",
+    "build": "npm run build --workspace @dadashi44/tree-view-core && npm run build --workspace @dadashi44/tree-view && npm run build --workspace @dadashi44/tree-view-vue2 && npm run build --workspace @dadashi44/tree-view-nuxt",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "check:packaging": "node scripts/check-packaging.mjs",
-    "verify": "npm run typecheck && npm test && npm run build && npm run check:packaging"
+    "verify": "npm run typecheck && npm test && npm run build && npm run check:packaging",
+    "set-version": "node scripts/set-version.mjs"
   },
   "engines": {
     "node": ">=20.19"

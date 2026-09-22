@@ -3,8 +3,8 @@ import TreeView from './TreeView.vue'
 import TreeNodeCard from './TreeNodeCard.vue'
 // Стили общие для Vue 2 и Vue 3 — лежат в core, чтобы не расходились.
 // Они попадают прямо в бандл и подключаются сами: отдельный импорт в проекте не нужен.
-import { injectStyles } from '@dadashi/tree-view-core'
-import styles from '@dadashi/tree-view-core/style.css?inline'
+import { injectStyles } from '@dadashi44/tree-view-core'
+import styles from '@dadashi44/tree-view-core/style.css?inline'
 
 injectStyles(styles)
 
@@ -24,8 +24,8 @@ export type {
   Transform,
   TreeNode,
   TreeViewOptions,
-} from '@dadashi/tree-view-core'
-export { DEFAULT_OPTIONS } from '@dadashi/tree-view-core'
+} from '@dadashi44/tree-view-core'
+export { DEFAULT_OPTIONS } from '@dadashi44/tree-view-core'
 
 /** Плагин: `app.use(TreeViewPlugin)` регистрирует компоненты глобально. */
 export const TreeViewPlugin: Plugin = {

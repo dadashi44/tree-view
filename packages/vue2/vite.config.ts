@@ -8,11 +8,11 @@ const coreStyles = fileURLToPath(new URL('../core/styles.css', import.meta.url))
 
 /**
  * Алиасы заданы регулярками: строковый алиас перехватил бы и
- * «@dadashi/tree-view-core/style.css?inline», а он должен вести в файл стилей.
+ * «@dadashi44/tree-view-core/style.css?inline», а он должен вести в файл стилей.
  */
 const devAliases = [
-  { find: /^@dadashi\/tree-view-core\/style\.css/, replacement: coreStyles },
-  { find: /^@dadashi\/tree-view-core$/, replacement: coreSource },
+  { find: /^@dadashi44\/tree-view-core\/style\.css/, replacement: coreStyles },
+  { find: /^@dadashi44\/tree-view-core$/, replacement: coreSource },
 ]
 
 export default defineConfig(({ command }) => ({
@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => ({
       fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
     },
     rollupOptions: {
-      external: ['vue', '@dadashi/tree-view-core'],
+      external: ['vue', '@dadashi44/tree-view-core'],
       output: { globals: { vue: 'Vue' } },
     },
   },

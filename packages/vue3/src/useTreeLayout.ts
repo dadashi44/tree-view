@@ -7,7 +7,7 @@ import {
   type Accessors,
   type Layout,
   type TreeViewOptions,
-} from '@dadashi/tree-view-core'
+} from '@dadashi44/tree-view-core'
 
 /** Функции-геттеры, чтобы композабл видел свежие значения пропов. */
 export interface UseTreeLayoutParams<T> {

@@ -12,7 +12,7 @@ import {
   type ScaleLimits,
   type Transform,
   type TreeViewOptions,
-} from '@dadashi/tree-view-core'
+} from '@dadashi44/tree-view-core'
 import TreeNodeCard from './TreeNodeCard.vue'
 import { usePanZoom } from './usePanZoom'
 import { useTreeLayout } from './useTreeLayout'

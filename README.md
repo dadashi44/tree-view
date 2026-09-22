@@ -5,10 +5,10 @@
 
 ```
 packages/
-  core   — @dadashi/tree-view-core        чистый TypeScript: раскладка, линии, зум. Ни строчки Vue
-  vue3   — @dadashi/tree-view             компонент для Vue 3
-  vue2   — @dadashi/tree-view-vue2        компонент для Vue 2.6 / 2.7
-  nuxt   — @dadashi/tree-view-nuxt        модуль Nuxt 3 / 4
+  core   — @dadashi44/tree-view-core        чистый TypeScript: раскладка, линии, зум. Ни строчки Vue
+  vue3   — @dadashi44/tree-view             компонент для Vue 3
+  vue2   — @dadashi44/tree-view-vue2        компонент для Vue 2.6 / 2.7
+  nuxt   — @dadashi44/tree-view-nuxt        модуль Nuxt 3 / 4
 playground — песочница на Vite: три типа сеток с данными и вёрсткой из clientFrontend
 ```
 
@@ -20,13 +20,13 @@ playground — песочница на Vite: три типа сеток с да�
 
 ```bash
 # Vue 3
-npm i @dadashi/tree-view
+npm i @dadashi44/tree-view
 
 # Vue 2.6 / 2.7
-npm i @dadashi/tree-view-vue2
+npm i @dadashi44/tree-view-vue2
 
 # Nuxt 3 / 4
-npm i @dadashi/tree-view-nuxt
+npm i @dadashi44/tree-view-nuxt
 ```
 
 ## Быстрый старт
@@ -35,7 +35,7 @@ npm i @dadashi/tree-view-nuxt
 
 ```vue
 <script setup>
-import { TreeView } from '@dadashi/tree-view'
+import { TreeView } from '@dadashi44/tree-view'
 
 const data = {
   id: 'final',
@@ -59,7 +59,7 @@ const data = {
 
 ```js
 import Vue from 'vue'
-import { TreeView } from '@dadashi/tree-view-vue2'
+import { TreeView } from '@dadashi44/tree-view-vue2'
 
 Vue.component('TreeView', TreeView)
 ```
@@ -73,7 +73,7 @@ Vue.component('TreeView', TreeView)
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@dadashi/tree-view-nuxt'],
+  modules: ['@dadashi44/tree-view-nuxt'],
 })
 ```
 
@@ -88,7 +88,7 @@ export default defineNuxtConfig({
 Стили подключать не нужно: они лежат внутри пакета и вставляются в страницу сами
 при первом импорте (на сервере при SSR — ничего не делают, на клиенте появляются при гидрации).
 Если стили нужны файлом (например, для critical CSS), он есть:
-`@dadashi/tree-view-core/style.css`.
+`@dadashi44/tree-view-core/style.css`.
 
 ## Свой внешний вид узла
 
@@ -193,7 +193,7 @@ export default defineNuxtConfig({
 (так устроены bounty-сетки: пары групп раунда сходятся в группу следующего):
 
 ```ts
-import { fromLevels, flatten } from '@dadashi/tree-view-core'
+import { fromLevels, flatten } from '@dadashi44/tree-view-core'
 
 // уровни от первого раунда к финалу
 const roots = fromLevels([round1.groups, round2.groups, final.groups])
@@ -275,7 +275,7 @@ const nodes = flatten(roots).map((node) => ({ ...node.data, id: node.id, parentI
 Если Vue не нужен — считать раскладку можно напрямую:
 
 ```ts
-import { toTree, layoutTree } from '@dadashi/tree-view-core'
+import { toTree, layoutTree } from '@dadashi44/tree-view-core'
 
 const layout = layoutTree(toTree(data), { direction: 'right-to-left' })
 // layout.nodes — координаты карточек, layout.links — готовые SVG-пути, layout.width/height — холст
@@ -322,6 +322,7 @@ npm test             # тесты всех пакетов (vitest)
 npm run typecheck    # проверка типов
 npm run build        # сборка всех пакетов
 npm run verify       # всё вместе + проверка упаковки перед публикацией
+npm run set-version  # общая версия всем пакетам (см. «Публикация»)
 ```
 
 Тесты: 126 штук — раскладка и нормализация данных в core, поведение компонентов
@@ -329,12 +330,34 @@ npm run verify       # всё вместе + проверка упаковки �
 
 ## Публикация
 
+Версии у всех четырёх пакетов общие, и они ссылаются друг на друга,
+поэтому поднимать версию нужно сразу везде:
+
+```bash
+npm run set-version 0.2.0   # версия всем пакетам + ссылки между ними
+npm install                 # обновить package-lock
+npm run verify              # типы, тесты, сборка, проверка упаковки
+
+git commit -am "chore: версия 0.2.0"
+git tag v0.2.0
+git push && git push --tags
+```
+
+Тег запускает workflow `.github/workflows/release.yml`, который сам
+проверит и опубликует пакеты **в правильном порядке**:
+core → vue3 → vue2 → nuxt (зависимость должна попасть в реестр раньше зависящего).
+
+Для этого в репозитории должен быть секрет `NPM_TOKEN`
+(Settings → Secrets and variables → Actions) — npm-токен типа Automation с правом publish.
+
+Если нужно руками, без Actions:
+
 ```bash
 npm run verify
-npm publish --workspace @dadashi/tree-view-core --access public
-npm publish --workspace @dadashi/tree-view --access public
-npm publish --workspace @dadashi/tree-view-vue2 --access public
-npm publish --workspace @dadashi/tree-view-nuxt --access public
+npm publish --workspace @dadashi44/tree-view-core
+npm publish --workspace @dadashi44/tree-view
+npm publish --workspace @dadashi44/tree-view-vue2
+npm publish --workspace @dadashi44/tree-view-nuxt
 ```
 
 `npm run check:packaging` проверяет, что все пути из `package.json` существуют в `dist` —

@@ -1,14 +1,14 @@
-# @dadashi/tree-view
+# @dadashi44/tree-view
 
 Дерево и турнирные сетки для Vue 3. Без зависимостей (d3 не нужен).
 
 ```bash
-npm i @dadashi/tree-view
+npm i @dadashi44/tree-view
 ```
 
 ```vue
 <script setup>
-import { TreeView } from '@dadashi/tree-view'
+import { TreeView } from '@dadashi44/tree-view'
 
 const data = { id: 'final', name: 'Финал', children: [{ id: 'sf-1', name: 'Полуфинал' }] }
 </script>

@@ -1,4 +1,4 @@
-import { flatten, fromLevels } from '@dadashi/tree-view-core'
+import { flatten, fromLevels } from '@dadashi44/tree-view-core'
 import { myTeamIds } from './tournament'
 import type { BountyGroup, BountyRound } from './bounty'
 

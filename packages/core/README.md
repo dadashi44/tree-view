@@ -1,13 +1,13 @@
-# @dadashi/tree-view-core
+# @dadashi44/tree-view-core
 
 Раскладка дерева на чистом TypeScript. Ни Vue, ни d3, ни других зависимостей.
 
 ```bash
-npm i @dadashi/tree-view-core
+npm i @dadashi44/tree-view-core
 ```
 
 ```ts
-import { toTree, layoutTree } from '@dadashi/tree-view-core'
+import { toTree, layoutTree } from '@dadashi44/tree-view-core'
 
 const layout = layoutTree(toTree(data), { direction: 'right-to-left' })
 
@@ -31,7 +31,7 @@ layout.height
 
 Все функции чистые и покрыты тестами — работают и в браузере, и на сервере.
 
-Компоненты поверх этого пакета: [`@dadashi/tree-view`](https://www.npmjs.com/package/@dadashi/tree-view) (Vue 3),
-[`@dadashi/tree-view-vue2`](https://www.npmjs.com/package/@dadashi/tree-view-vue2) (Vue 2).
+Компоненты поверх этого пакета: [`@dadashi44/tree-view`](https://www.npmjs.com/package/@dadashi44/tree-view) (Vue 3),
+[`@dadashi44/tree-view-vue2`](https://www.npmjs.com/package/@dadashi44/tree-view-vue2) (Vue 2).
 
 MIT

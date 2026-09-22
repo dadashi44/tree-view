@@ -1,5 +1,5 @@
 {
-  "name": "@dadashi/tree-view",
+  "name": "@dadashi44/tree-view",
   "version": "0.1.0",
   "description": "Компонент дерева и турнирных сеток для Vue 3",
   "license": "MIT",
@@ -35,7 +35,7 @@
     "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@dadashi/tree-view-core": "^0.1.0"
+    "@dadashi44/tree-view-core": "^0.1.0"
   },
   "peerDependencies": {
     "vue": "^3.3.0"

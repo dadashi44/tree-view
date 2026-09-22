@@ -4,7 +4,7 @@
  * Точно такая же конструкция используется на странице турнира в clientFrontend.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { TreeView, type TreeViewOptions } from '@dadashi/tree-view'
+import { TreeView, type TreeViewOptions } from '@dadashi44/tree-view'
 import MatchCard from './MatchCard.vue'
 import { toFlatMatches, toTreeMatches, type BracketMatch, type BracketTeam } from '../data/buildBracket'
 import type { ApiGrid } from '../data/tournament'

@@ -14,7 +14,7 @@ export interface ModuleOptions {
  */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: '@dadashi/tree-view-nuxt',
+    name: '@dadashi44/tree-view-nuxt',
     configKey: 'treeView',
     compatibility: { nuxt: '>=3.0.0' },
   },
@@ -24,9 +24,9 @@ export default defineNuxtModule<ModuleOptions>({
   setup(options, nuxt) {
     const prefix = options.prefix ?? ''
 
-    nuxt.options.build.transpile.push('@dadashi/tree-view')
+    nuxt.options.build.transpile.push('@dadashi44/tree-view')
 
-    addComponent({ name: `${prefix}TreeView`, export: 'TreeView', filePath: '@dadashi/tree-view' })
-    addComponent({ name: `${prefix}TreeNodeCard`, export: 'TreeNodeCard', filePath: '@dadashi/tree-view' })
+    addComponent({ name: `${prefix}TreeView`, export: 'TreeView', filePath: '@dadashi44/tree-view' })
+    addComponent({ name: `${prefix}TreeNodeCard`, export: 'TreeNodeCard', filePath: '@dadashi44/tree-view' })
   },
 })
