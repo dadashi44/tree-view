@@ -105,20 +105,23 @@ function fromFlatList<T>(
   return roots
 }
 
-/** Проставляет `depth` обходом в ширину и возвращает число посещённых узлов. */
+/**
+ * Проставляет `depth` обходом в ширину и возвращает число посещённых узлов.
+ *
+ * Очередь читается указателем, а не `shift()`: тот сдвигает весь массив,
+ * и на десятках тысяч узлов обход превращается в квадрат.
+ */
 function setDepths<T>(roots: TreeNode<T>[]): number {
   const queue = [...roots]
-  let visited = 0
 
-  while (queue.length > 0) {
-    const node = queue.shift()!
-    visited += 1
+  for (let index = 0; index < queue.length; index += 1) {
+    const node = queue[index]!
     for (const child of node.children) {
       child.depth = node.depth + 1
       queue.push(child)
     }
   }
-  return visited
+  return queue.length
 }
 
 /** Приводит идентификатор к строке, подставляя путь, если его нет. */
