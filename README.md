@@ -429,7 +429,7 @@ npm run verify       # всё вместе + проверка упаковки �
 npm run set-version  # общая версия всем пакетам (см. «Публикация»)
 ```
 
-Решения и замеры — в [DEV-NOTES.md](DEV-NOTES.md).
+История изменений — в [CHANGELOG.md](CHANGELOG.md).
 
 Тесты: 183 штуки — раскладка и нормализация данных в core, поведение компонентов
 в vue3 и vue2 (@vue/test-utils + happy-dom).
