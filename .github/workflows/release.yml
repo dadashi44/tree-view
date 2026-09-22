@@ -1,8 +1,18 @@
 # Публикация в npm по тегу вида v0.2.0.
 #
-# Что нужно один раз настроить в репозитории:
-#   Settings → Secrets and variables → Actions → New repository secret
-#   Имя: NPM_TOKEN, значение: токен npm с правом publish (Automation token).
+# Токен не используется: доверие между npm и этим репозиторием установлено
+# через OpenID Connect (Trusted Publisher). Раннер получает короткоживущий
+# идентификатор от GitHub, npm его проверяет и разрешает публикацию — секрет
+# NPM_TOKEN больше не нужен и не должен лежать в репозитории.
+#
+# Что настроено на стороне npm (по одному разу на каждый пакет):
+#   Страница пакета → Settings → Trusted Publisher → GitHub Actions
+#   Organization or user: dadashi44 · Repository: tree-view
+#   Workflow filename: release.yml · Environment name: пусто
+#   Allowed actions: включён «Allow npm publish»
+#
+# Если менять имя файла этого workflow — связь на npm придётся пересоздать:
+# поля Trusted Publisher после создания не редактируются.
 name: Release
 
 on:
@@ -13,6 +23,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      # Без этого GitHub не выдаст OIDC-токен, и публикация упадёт на авторизации.
+      id-token: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +36,10 @@ jobs:
           node-version: 20
           cache: npm
           registry-url: https://registry.npmjs.org
+
+      # В Node 20 приезжает npm 10, а доверенная публикация появилась в 11.5.1.
+      - name: Свежий npm
+        run: npm install -g npm@latest
 
       - name: Установка зависимостей
         run: npm ci
@@ -32,20 +51,12 @@ jobs:
       # зависимость должна попасть в реестр раньше зависящего.
       - name: Публикация core
         run: npm publish --workspace @bigplay/tree-view-core
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Vue 3
         run: npm publish --workspace @bigplay/tree-view
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Vue 2
         run: npm publish --workspace @bigplay/tree-view-vue2
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Публикация Nuxt-модуля
         run: npm publish --workspace @bigplay/tree-view-nuxt
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
