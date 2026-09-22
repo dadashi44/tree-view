@@ -2,6 +2,7 @@
 export * from './types'
 export { DEFAULT_OPTIONS, resolveOptions } from './defaults'
 export { toTree, type Accessors } from './normalize'
+export { fromLevels, type FromLevelsOptions } from './fromLevels'
 export { applyCollapsed, toggleCollapsed } from './collapse'
 export { layoutTree, assignOrders, flatten } from './layout'
 export { buildLinks, buildPath, getAnchors } from './links'
