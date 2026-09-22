@@ -1,0 +1,51 @@
+# Публикация в npm по тегу вида v0.2.0.
+#
+# Что нужно один раз настроить в репозитории:
+#   Settings → Secrets and variables → Actions → New repository secret
+#   Имя: NPM_TOKEN, значение: токен npm с правом publish (Automation token).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Проверка перед публикацией
+        run: npm run verify
+
+      # Порядок важен: пакеты ссылаются друг на друга,
+      # зависимость должна попасть в реестр раньше зависящего.
+      - name: Публикация core
+        run: npm publish --workspace @dadashi44/tree-view-core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Публикация Vue 3
+        run: npm publish --workspace @dadashi44/tree-view
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Публикация Vue 2
+        run: npm publish --workspace @dadashi44/tree-view-vue2
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Публикация Nuxt-модуля
+        run: npm publish --workspace @dadashi44/tree-view-nuxt
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

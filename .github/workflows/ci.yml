@@ -1,0 +1,25 @@
+# Проверка на каждый пуш и пулл-реквест: типы, тесты, сборка, упаковка.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Типы, тесты, сборка и проверка упаковки
+        run: npm run verify
