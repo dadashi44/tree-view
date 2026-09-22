@@ -50,14 +50,17 @@ jobs:
 
       # Порядок важен: пакеты ссылаются друг на друга,
       # зависимость должна попасть в реестр раньше зависящего.
+      #
+      # publish-if-new пропускает пакет, если такая версия уже опубликована,
+      # поэтому повторный запуск прогона не падает на «cannot publish over».
       - name: Публикация core
-        run: npm publish --workspace @bigplay/tree-view-core
+        run: node scripts/publish-if-new.mjs core
 
       - name: Публикация Vue 3
-        run: npm publish --workspace @bigplay/tree-view
+        run: node scripts/publish-if-new.mjs vue3
 
       - name: Публикация Vue 2
-        run: npm publish --workspace @bigplay/tree-view-vue2
+        run: node scripts/publish-if-new.mjs vue2
 
       - name: Публикация Nuxt-модуля
-        run: npm publish --workspace @bigplay/tree-view-nuxt
+        run: node scripts/publish-if-new.mjs nuxt
