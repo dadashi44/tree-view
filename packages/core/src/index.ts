@@ -20,6 +20,15 @@ export { buildLinks, buildPath, getAnchors } from './links'
 export { PanZoomController, ZOOM_STEP, type PanZoomParams } from './panZoom'
 export { injectStyles } from './injectStyles'
 export {
+  visibleLayout,
+  measureVisibleRect,
+  estimateVisibleRect,
+  expandRect,
+  DEFAULT_OVERSCAN,
+  VIRTUALIZE_THRESHOLD,
+  type Rect,
+} from './virtualize'
+export {
   clamp,
   fitToViewport,
   panBy,
