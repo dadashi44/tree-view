@@ -120,6 +120,8 @@ body {
 
 .rounds {
   display: flex;
+  /* Отступ, чтобы шапка раундов не прилипала к первым карточкам. */
+  margin-bottom: 20px;
   background: var(--rounds-bg);
   border-bottom: 2px solid var(--border);
 }
