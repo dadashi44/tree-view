@@ -1,7 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    /*
+     * Типы @nuxt/kit тянут @nuxt/schema, и доедет он или нет — зависит от того,
+     * как npm разложил node_modules: в чистом дереве типы молча становятся any,
+     * и tsc валится на параметрах setup. Своего кода это не касается — модуль
+     * состоит из одного вызова defineNuxtModule.
+     */
+    "noImplicitAny": false
   },
   "include": ["src", "vite.config.ts"]
 }
