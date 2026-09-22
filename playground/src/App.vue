@@ -1,31 +1,72 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BracketGrid from './components/BracketGrid.vue'
+import BountyGrid from './components/BountyGrid.vue'
 import { lowerGrid, upperGrid } from './data/tournament'
+import { bountyGrid } from './data/bounty'
 import type { BracketMatch, BracketTeam } from './data/buildBracket'
+import type { BountyNode, BountyNodeTeam } from './data/buildBounty'
 
-/** Формат данных: плоский список из API или заранее собранное дерево. */
+/** Типы сеток — те же, что на сайте турниров. */
+const gridTypes = [
+  { id: 'single', name: 'Single elimination' },
+  { id: 'double', name: 'Double elimination' },
+  { id: 'bounty', name: 'Bounty' },
+] as const
+
+type GridType = (typeof gridTypes)[number]['id']
+
+const gridType = ref<GridType>('double')
+/** Формат данных для сеток на выбывание: плоский список из API или собранное дерево. */
 const format = ref<'flat' | 'tree'>('flat')
 /** Интерактивный режим — перетаскивание и зум вместо обычного скролла. */
 const interactive = ref(false)
 
-const selected = ref<BracketMatch | null>(null)
+/** То, что показывает модалка: заголовок и строки со счётом. */
+const selected = ref<{ title: string; rows: Array<{ name: string; score: string; best: boolean }> } | null>(null)
 
-function onSelect(match: BracketMatch, team: BracketTeam) {
+function onMatchSelect(match: BracketMatch, team: BracketTeam) {
   console.log('Клик по команде', team.name, 'в матче', match.name)
-  selected.value = match
+  selected.value = {
+    title: match.name,
+    rows: match.teams.map((item) => ({
+      name: item.name,
+      score: item.isTechDefeat ? 'ТП' : String(item.score),
+      best: item.isWinner,
+    })),
+  }
+}
+
+function onGroupSelect(node: BountyNode, team: BountyNodeTeam) {
+  console.log('Клик по команде', team.name, 'в группе', node.name)
+  selected.value = {
+    title: `Группа #${node.name}`,
+    rows: node.teams.map((item) => ({ name: item.name, score: String(item.score), best: item.isBest })),
+  }
 }
 </script>
 
 <template>
   <div class="page">
-    <h1 class="page__title">Турнирная сетка</h1>
+    <h1 class="page__title">Турнирные сетки</h1>
     <p class="page__subtitle">
-      Данные, вёрстка карточек и стили — как на странице турнира в clientFrontend.
+      Данные, вёрстка карточек и стили — как на страницах турниров в clientFrontend.
     </p>
 
+    <div class="tabs">
+      <button
+        v-for="type in gridTypes"
+        :key="type.id"
+        class="tab"
+        :class="{ 'tab--active': gridType === type.id }"
+        @click="gridType = type.id"
+      >
+        {{ type.name }}
+      </button>
+    </div>
+
     <div class="toolbar">
-      <label>
+      <label v-if="gridType !== 'bounty'">
         Формат данных
         <select v-model="format">
           <option value="flat">плоский список из API</option>
@@ -39,35 +80,50 @@ function onSelect(match: BracketMatch, team: BracketTeam) {
       </label>
     </div>
 
+    <!-- Single elimination: одна сетка. -->
     <BracketGrid
-      title="Верхняя сетка"
+      v-if="gridType === 'single'"
+      title="Основная сетка"
       :grid="upperGrid"
       :format="format"
       :interactive="interactive"
-      @select="onSelect"
+      @select="onMatchSelect"
     />
 
-    <BracketGrid
-      title="Нижняя сетка"
-      :grid="lowerGrid"
-      :format="format"
-      :interactive="interactive"
-      @select="onSelect"
-    />
+    <!-- Double elimination: верхняя и нижняя сетки, у каждой свои раунды. -->
+    <template v-else-if="gridType === 'double'">
+      <BracketGrid
+        title="Верхняя сетка"
+        :grid="upperGrid"
+        :format="format"
+        :interactive="interactive"
+        @select="onMatchSelect"
+      />
+      <BracketGrid
+        title="Нижняя сетка"
+        :grid="lowerGrid"
+        :format="format"
+        :interactive="interactive"
+        @select="onMatchSelect"
+      />
+    </template>
 
-    <!-- Упрощённая модалка матча: в проде здесь MatchDetailModal с запросом за деталями. -->
+    <!-- Bounty: узел — группа команд, связи выводятся по позиции в раунде. -->
+    <BountyGrid v-else :rounds="bountyGrid" :interactive="interactive" @select="onGroupSelect" />
+
+    <!-- Упрощённая модалка: в проде здесь MatchDetailModal с запросом за деталями. -->
     <div v-if="selected" class="modal" @click.self="selected = null">
       <div class="modal__body">
-        <h3 class="modal__title">{{ selected.name }}</h3>
+        <h3 class="modal__title">{{ selected.title }}</h3>
 
         <div
-          v-for="team in selected.teams"
-          :key="team.id"
+          v-for="row in selected.rows"
+          :key="row.name"
           class="modal__row"
-          :class="{ 'modal__row--winner': team.isWinner }"
+          :class="{ 'modal__row--winner': row.best }"
         >
-          <span>{{ team.name }}</span>
-          <span>{{ team.isTechDefeat ? 'ТП' : team.score }}</span>
+          <span>{{ row.name }}</span>
+          <span>{{ row.score }}</span>
         </div>
 
         <button class="modal__close" @click="selected = null">Закрыть</button>
