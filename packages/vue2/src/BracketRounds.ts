@@ -13,6 +13,7 @@ import {
   roundAtScroll,
   roundOfDepth,
   roundScrollLeft,
+  roundSiblingGap,
   smoothScrollLeft,
   watchChildren,
   watchMedia,
@@ -20,6 +21,7 @@ import {
   type BracketRound,
   type BracketRoundColumn,
   type BracketRoundsModel,
+  type TreeNode,
   type TreeViewOptions,
 } from '@bigplay/tree-view-core'
 
@@ -36,7 +38,10 @@ export default Vue.extend({
     options: { type: Object as PropType<Partial<TreeViewOptions>>, default: undefined },
     /** Показывать полосу. Содержимое слота рисуется в любом случае. */
     isShow: { type: Boolean, default: true },
-    /** Расстояние между матчами одного раунда в режиме свайпера. */
+    /**
+     * Базовое расстояние между матчами одного раунда в свайпере.
+     * Раунд с несколькими матчами получает кратно больше — до четырёх раз.
+     */
     swipeSiblingGap: { type: Number, default: 12 },
     /** Прятать пройденные раунды и линии, которые из них выходят. */
     hidePassed: { type: Boolean, default: true },
@@ -97,11 +102,24 @@ export default Vue.extend({
       return this.base.direction === 'right-to-left' || this.base.direction === 'bottom-to-top'
     },
 
-    /** Настройки для сетки: в свайпере — с растянутыми раундами и сжатыми матчами. */
+    /**
+     * Настройки для сетки в свайпере.
+     *
+     * Раунды растягиваются на ширину экрана, а уровни укладываются каждый сам по
+     * себе: в дереве место второго раунда выводится из первого, поэтому отдельно
+     * его отступ не задать. Сам отступ зависит от того, сколько матчей в раунде.
+     */
     gridOptions(): Partial<TreeViewOptions> {
-      return this.isSwipe
-        ? { ...this.options, levelGap: this.levelGap, siblingGap: this.swipeSiblingGap }
-        : { ...this.options }
+      if (!this.isSwipe) return { ...this.options }
+
+      const base = this.swipeSiblingGap
+
+      return {
+        ...this.options,
+        levelGap: this.levelGap,
+        levelLayout: 'stack',
+        siblingGap: (_node: TreeNode<unknown>, count: number) => roundSiblingGap(count, base),
+      }
     },
   },
 
