@@ -220,3 +220,47 @@
   border-radius: 4px;
   box-shadow: 0 4px 10px rgb(15 23 42 / 15%);
 }
+
+/* ── Полоса раундов над сеткой ──────────────────────────────────
+ * Компонент BracketRounds есть и в Vue 2, и в Vue 3 — разметка общая.
+ * Колонка раунда шире карточки на levelGap, поэтому сетке даётся
+ * отступ слева в половину промежутка: так матчи стоят по центру раунда.
+ */
+
+.tv-rounds {
+  --tv-rounds-bg: #f5f5f7;
+  --tv-rounds-color: #9ca3af;
+  --tv-rounds-border: 2px solid #e5e7eb;
+  --tv-rounds-gap: 20px;
+
+  display: flex;
+  flex-direction: column;
+  /* Полоса должна быть шириной во всю сетку, а не во весь экран:
+     иначе при горизонтальном скролле фон и линия обрываются на полпути. */
+  width: max-content;
+  min-width: 100%;
+}
+
+.tv-rounds__bar {
+  display: flex;
+  min-width: 100%;
+  margin-bottom: var(--tv-rounds-gap);
+  background: var(--tv-rounds-bg);
+  border-bottom: var(--tv-rounds-border);
+}
+
+.tv-rounds__item {
+  flex: none;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tv-rounds-color);
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-right: var(--tv-rounds-border);
+}
