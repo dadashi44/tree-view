@@ -29,5 +29,10 @@ export default defineNuxtModule<ModuleOptions>({
     addComponent({ name: `${prefix}TreeView`, export: 'TreeView', filePath: '@bigplay/tree-view' })
     addComponent({ name: `${prefix}TreeNodeCard`, export: 'TreeNodeCard', filePath: '@bigplay/tree-view' })
     addComponent({ name: `${prefix}BracketCard`, export: 'BracketCard', filePath: '@bigplay/tree-view' })
+    addComponent({
+      name: `${prefix}BracketRounds`,
+      export: 'BracketRounds',
+      filePath: '@bigplay/tree-view',
+    })
   },
 })
