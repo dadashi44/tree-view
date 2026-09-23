@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest'
 import {
+  HIDDEN_CLASS,
   findScrollParent,
+  hideRoundsBefore,
   horizontalBox,
   nodesInColumn,
   offsetWithin,
@@ -131,5 +133,55 @@ describe('horizontalBox', () => {
     container.scrollLeft = 100
 
     expect(horizontalBox(card, container)).toEqual({ left: 120, width: 211 })
+  })
+})
+
+describe('hideRoundsBefore', () => {
+  /** Сетка из трёх раундов справа налево: первый раунд — глубина 2. */
+  function grid(): HTMLElement {
+    const content = document.createElement('div')
+
+    for (const depth of [2, 2, 1, 0]) {
+      const node = document.createElement('div')
+      node.setAttribute('data-depth', String(depth))
+      content.appendChild(node)
+    }
+
+    return content
+  }
+
+  const roundOf = (depth: number) => 2 - depth
+  const hidden = (content: HTMLElement) =>
+    Array.from(content.children)
+      .filter((node) => node.classList.contains(HIDDEN_CLASS))
+      .map((node) => node.getAttribute('data-depth'))
+
+  it('на первом раунде не прячет ничего', () => {
+    const content = grid()
+    hideRoundsBefore(content, 0, roundOf)
+
+    expect(hidden(content)).toEqual([])
+  })
+
+  it('на втором раунде прячет первый — вместе с его линиями', () => {
+    const content = grid()
+    hideRoundsBefore(content, 1, roundOf)
+
+    expect(hidden(content)).toEqual(['2', '2'])
+  })
+
+  it('на финале остаётся только он', () => {
+    const content = grid()
+    hideRoundsBefore(content, 2, roundOf)
+
+    expect(hidden(content)).toEqual(['2', '2', '1'])
+  })
+
+  it('возврат назад снимает скрытие', () => {
+    const content = grid()
+    hideRoundsBefore(content, 2, roundOf)
+    hideRoundsBefore(content, 0, roundOf)
+
+    expect(hidden(content)).toEqual([])
   })
 })

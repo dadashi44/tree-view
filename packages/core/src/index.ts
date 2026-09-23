@@ -17,6 +17,9 @@ export {
 } from './bracket'
 export {
   buildBracketRounds,
+  levelGapForWidth,
+  roundAtScroll,
+  roundOfDepth,
   roundScrollLeft,
   type BracketRound,
   type BracketRoundColumn,
@@ -30,9 +33,11 @@ export {
   offsetWithin,
   nodesInColumn,
   horizontalBox,
+  hideRoundsBefore,
+  HIDDEN_CLASS,
   TREE_NODE_SELECTOR,
 } from './scroll'
-export { watchMedia, MOBILE_MEDIA_QUERY } from './media'
+export { watchMedia, watchWidth, watchChildren, MOBILE_MEDIA_QUERY } from './media'
 export { layoutTree, placeNodes, flatten, type Placement, type Placements } from './layout'
 export { buildLinks, buildPath, getAnchors } from './links'
 export { PanZoomController, ZOOM_STEP, type PanZoomParams } from './panZoom'

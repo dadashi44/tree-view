@@ -89,3 +89,26 @@ export function horizontalBox(
 ): { left: number; width: number } {
   return { left: offsetWithin(element, container), width: element.getBoundingClientRect().width }
 }
+
+/** Класс, которым помечается скрытое: карточка или линия пройденного раунда. */
+export const HIDDEN_CLASS = 'tv-hidden'
+
+/**
+ * Прячет всё, что относится к раундам левее текущего: и карточки, и линии,
+ * которые из них выходят. Работает по атрибуту `data-depth`, который сетка
+ * ставит на карточки и линии.
+ *
+ * Прячем видимостью, а не удалением: раскладка остаётся на месте, поэтому
+ * прокрутка и точки прилипания не съезжают под пальцем.
+ */
+export function hideRoundsBefore(
+  content: HTMLElement,
+  index: number,
+  roundOf: (depth: number) => number,
+): void {
+  content.querySelectorAll<HTMLElement>('[data-depth]').forEach((element) => {
+    const depth = Number(element.getAttribute('data-depth'))
+
+    element.classList.toggle(HIDDEN_CLASS, roundOf(depth) < index)
+  })
+}

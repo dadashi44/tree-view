@@ -91,3 +91,32 @@ export function roundScrollLeft(box: RoundScrollBox): number {
 
   return clamp(centered, 0, Math.max(0, box.scrollWidth - box.viewport))
 }
+
+/**
+ * Промежуток между раундами, при котором один раунд занимает всю ширину блока.
+ *
+ * На узком экране из сетки получается «свайпер»: колонка раунда становится
+ * шириной с экран, карточка встаёт по его центру (за это отвечает `offset`),
+ * а линии между матчами остаются на месте — сетка по-прежнему одна.
+ */
+export function levelGapForWidth(width: number, nodeWidth: number): number {
+  return Math.max(0, width - nodeWidth)
+}
+
+/** Раунд, на котором сейчас стоит прокрутка. */
+export function roundAtScroll(scrollLeft: number, columnWidth: number, count: number): number {
+  if (columnWidth <= 0 || count <= 0) return 0
+
+  return clamp(Math.round(scrollLeft / columnWidth), 0, count - 1)
+}
+
+/**
+ * Номер раунда по глубине уровня.
+ *
+ * У турнирной сетки дерево растёт справа налево: корень — финал, поэтому
+ * первый раунд оказывается самым глубоким. При обычном направлении номер
+ * раунда совпадает с глубиной.
+ */
+export function roundOfDepth(depth: number, count: number, mirrored: boolean): number {
+  return mirrored ? count - 1 - depth : depth
+}

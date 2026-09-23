@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { buildBracketRounds, roundScrollLeft } from '../src/rounds'
+import {
+  buildBracketRounds,
+  levelGapForWidth,
+  roundAtScroll,
+  roundOfDepth,
+  roundScrollLeft,
+} from '../src/rounds'
 
 const rounds = [
   { id: 1, name: '1/4' },
@@ -65,5 +71,55 @@ describe('roundScrollLeft', () => {
 
   it('содержимое влезло целиком — прокручивать некуда', () => {
     expect(roundScrollLeft({ ...box, left: 500, scrollWidth: 500 })).toBe(0)
+  })
+})
+
+describe('levelGapForWidth', () => {
+  it('растягивает раунд на всю ширину блока', () => {
+    const gap = levelGapForWidth(390, 211)
+    const model = buildBracketRounds(rounds, { nodeWidth: 211, levelGap: gap })
+
+    // Колонка раунда ровно с экран, карточка — по его центру.
+    expect(model.columns[0]!.width).toBe(390)
+    expect(model.offset).toBe((390 - 211) / 2)
+  })
+
+  it('карточка шире блока — промежутка не остаётся', () => {
+    expect(levelGapForWidth(180, 211)).toBe(0)
+  })
+
+  it('ширину ещё не померили — тоже ноль', () => {
+    expect(levelGapForWidth(0, 211)).toBe(0)
+  })
+})
+
+describe('roundAtScroll', () => {
+  it('считает раунд по прокрутке', () => {
+    expect(roundAtScroll(0, 390, 3)).toBe(0)
+    expect(roundAtScroll(390, 390, 3)).toBe(1)
+    expect(roundAtScroll(780, 390, 3)).toBe(2)
+  })
+
+  it('на полпути свайпа переключается на следующий', () => {
+    expect(roundAtScroll(194, 390, 3)).toBe(0)
+    expect(roundAtScroll(196, 390, 3)).toBe(1)
+  })
+
+  it('дальше последнего раунда не уходит', () => {
+    expect(roundAtScroll(99999, 390, 3)).toBe(2)
+  })
+
+  it('ширину ещё не знаем — стоим на первом', () => {
+    expect(roundAtScroll(100, 0, 3)).toBe(0)
+  })
+})
+
+describe('roundOfDepth', () => {
+  it('сетка растёт справа налево: первый раунд самый глубокий', () => {
+    expect([2, 1, 0].map((depth) => roundOfDepth(depth, 3, true))).toEqual([0, 1, 2])
+  })
+
+  it('обычное направление: раунд совпадает с глубиной', () => {
+    expect([0, 1, 2].map((depth) => roundOfDepth(depth, 3, false))).toEqual([0, 1, 2])
   })
 })

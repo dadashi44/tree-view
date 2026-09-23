@@ -1,6 +1,6 @@
 /**
- * Подписка на медиавыражение — чтобы компоненты не писали работу с
- * `matchMedia` дважды и одинаково вели себя на сервере.
+ * Подписки на размер экрана и блока — чтобы компоненты не писали работу с
+ * `matchMedia` и `ResizeObserver` дважды и одинаково вели себя на сервере.
  */
 
 /** Узкий экран: ниже этой ширины раунды показываются табами. */
@@ -29,4 +29,44 @@ export function watchMedia(query: string, onChange: (matches: boolean) => void):
 
   media.addListener(listener)
   return () => media.removeListener(listener)
+}
+
+/**
+ * Следит за шириной блока и сразу сообщает текущую.
+ * Возвращает функцию отписки. На сервере ничего не делает.
+ */
+export function watchWidth(
+  element: HTMLElement | null | undefined,
+  onChange: (width: number) => void,
+): () => void {
+  if (!element) return () => {}
+
+  onChange(element.clientWidth)
+
+  // Без ResizeObserver останется первая ширина — это лучше, чем ничего.
+  if (typeof ResizeObserver === 'undefined') return () => {}
+
+  const observer = new ResizeObserver(() => onChange(element.clientWidth))
+  observer.observe(element)
+
+  return () => observer.disconnect()
+}
+
+/**
+ * Следит за тем, как меняется содержимое блока: сетка перерисовывает карточки
+ * при новых данных и при виртуализации, и скрытое приходится расставлять заново.
+ *
+ * Смотрим только на состав детей — на изменения классов не реагируем,
+ * иначе собственная правка классов запускала бы бесконечный круг.
+ */
+export function watchChildren(
+  element: HTMLElement | null | undefined,
+  onChange: () => void,
+): () => void {
+  if (!element || typeof MutationObserver === 'undefined') return () => {}
+
+  const observer = new MutationObserver(onChange)
+  observer.observe(element, { childList: true, subtree: true })
+
+  return () => observer.disconnect()
 }
