@@ -18,6 +18,8 @@ export {
 export {
   buildBracketRounds,
   levelGapForWidth,
+  roundSiblingGap,
+  MAX_GAP_STEPS,
   roundAtScroll,
   roundOfDepth,
   roundScrollLeft,

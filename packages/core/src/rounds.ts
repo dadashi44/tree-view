@@ -120,3 +120,17 @@ export function roundAtScroll(scrollLeft: number, columnWidth: number, count: nu
 export function roundOfDepth(depth: number, count: number, mirrored: boolean): number {
   return mirrored ? count - 1 - depth : depth
 }
+
+/** Дальше четырёх матчей отступ не растёт: экран не резиновый. */
+export const MAX_GAP_STEPS = 4
+
+/**
+ * Отступ между матчами одного раунда в свайпере.
+ *
+ * Чем больше матчей, тем крупнее отступ: в первом раунде их восемь и с
+ * маленьким отступом они сливаются в одну стену, а в полуфинале матча два —
+ * там разводить нечего, и лишнее место только гонит вниз по экрану.
+ */
+export function roundSiblingGap(count: number, base: number): number {
+  return base * clamp(count, 1, MAX_GAP_STEPS)
+}

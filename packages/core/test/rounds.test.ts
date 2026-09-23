@@ -4,6 +4,7 @@ import {
   levelGapForWidth,
   roundAtScroll,
   roundOfDepth,
+  roundSiblingGap,
   roundScrollLeft,
 } from '../src/rounds'
 
@@ -121,5 +122,22 @@ describe('roundOfDepth', () => {
 
   it('обычное направление: раунд совпадает с глубиной', () => {
     expect([0, 1, 2].map((depth) => roundOfDepth(depth, 3, false))).toEqual([0, 1, 2])
+  })
+})
+
+describe('roundSiblingGap', () => {
+  it('чем больше матчей, тем крупнее отступ', () => {
+    expect(roundSiblingGap(1, 12)).toBe(12)
+    expect(roundSiblingGap(2, 12)).toBe(24)
+    expect(roundSiblingGap(4, 12)).toBe(48)
+  })
+
+  it('дальше четырёх матчей не растёт', () => {
+    expect(roundSiblingGap(8, 12)).toBe(48)
+    expect(roundSiblingGap(64, 12)).toBe(48)
+  })
+
+  it('пустой раунд получает базовый отступ', () => {
+    expect(roundSiblingGap(0, 12)).toBe(12)
   })
 })
