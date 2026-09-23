@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BracketRounds from '../src/BracketRounds'
 
@@ -8,7 +8,18 @@ const rounds = [
   { id: 3, name: 'Финал' },
 ]
 
-const propsData = { rounds, nodeWidth: 211, levelGap: 39 }
+/** Те же настройки, что у сетки в песочнице. */
+const options = {
+  nodeWidth: 211,
+  levelGap: 39,
+  siblingGap: 32,
+  // Сетка растёт справа налево: финал справа, первый раунд — самый глубокий.
+  direction: 'right-to-left' as const,
+}
+const propsData = { rounds, options }
+
+/** Отдельный блок под компонент: к нему же цепляется измерение ширины. */
+const host = () => document.body.appendChild(document.createElement('div'))
 
 describe('BracketRounds (Vue 2)', () => {
   it('рисует по колонке на раунд', () => {
@@ -19,10 +30,7 @@ describe('BracketRounds (Vue 2)', () => {
   })
 
   it('классы и размеры такие же, как в Vue 3', () => {
-    const wrapper = mount(BracketRounds, {
-      propsData,
-      slots: { default: '<i>сетка</i>' },
-    })
+    const wrapper = mount(BracketRounds, { propsData, slots: { default: '<i>сетка</i>' } })
 
     expect(wrapper.find('.tv-rounds__item').attributes('style')).toContain('width: 250px')
     expect(wrapper.find('.tv-rounds__content').attributes('style')).toContain('padding-left: 19.5px')
@@ -38,27 +46,77 @@ describe('BracketRounds (Vue 2)', () => {
     expect(wrapper.find('i').exists()).toBe(true)
   })
 
-  it('на широком экране раунд не кнопка: клик ничего не делает', async () => {
+  it('клик по раунду отдаёт его наружу', async () => {
     const wrapper = mount(BracketRounds, { propsData })
 
     await wrapper.findAll('.tv-rounds__item').at(1).trigger('click')
 
-    expect(wrapper.emitted('select')).toBeUndefined()
-  })
-
-  it('на узком экране выглядит так же: те же колонки той же ширины', () => {
-    const wide = mount(BracketRounds, { propsData })
-    const narrow = mount(BracketRounds, { propsData: { ...propsData, scrollOnClick: true } })
-
-    expect(narrow.find('.tv-rounds__bar').html()).toBe(wide.find('.tv-rounds__bar').html())
-  })
-
-  it('нажатие отдаёт раунд', async () => {
-    const wrapper = mount(BracketRounds, { propsData: { ...propsData, scrollOnClick: true } })
-
-    await wrapper.findAll('.tv-rounds__item').at(1).trigger('click')
-
     expect(wrapper.emitted('select')![0]![0]).toMatchObject({ id: 2, name: '1/2', index: 1 })
+  })
+
+  describe('свайпер на узком экране', () => {
+    /**
+     * Ширину полосе даёт родительский блок. В happy-dom размеров нет вовсе,
+     * поэтому подменяем clientWidth на время этих тестов.
+     */
+    let restore: PropertyDescriptor | undefined
+
+    beforeEach(() => {
+      restore = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth')
+      Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+        configurable: true,
+        get: () => 390,
+      })
+    })
+
+    afterEach(() => {
+      if (restore) Object.defineProperty(HTMLElement.prototype, 'clientWidth', restore)
+    })
+
+    it('раунд занимает всю ширину блока, карточка встаёт по центру', async () => {
+      const wrapper = mount(BracketRounds, {
+        propsData: { ...propsData, swipe: true },
+        attachTo: host(),
+      })
+      // Ширину компонент узнаёт после монтирования — ждём перерисовку.
+      await wrapper.vm.$nextTick()
+
+      // 390 = 211 карточки + 179 промежутка, отступ — половина промежутка.
+      expect(wrapper.classes()).toContain('tv-rounds--swipe')
+      expect(wrapper.find('.tv-rounds__item').attributes('style')).toContain('width: 390px')
+      expect(wrapper.find('.tv-rounds__content').attributes('style')).toContain(
+        'padding-left: 89.5px',
+      )
+    })
+
+    it('сетке уходят растянутые раунды и сжатые матчи', async () => {
+      const seen: Array<Record<string, unknown>> = []
+
+      const wrapper = mount(BracketRounds, {
+        propsData: { ...propsData, swipe: true, swipeSiblingGap: 8 },
+        scopedSlots: {
+          default(params: { options: Record<string, unknown> }) {
+            seen.push(params.options)
+            return undefined
+          },
+        },
+        attachTo: host(),
+      })
+      await wrapper.vm.$nextTick()
+
+      // Ширина карточки не меняется — иначе разъехалась бы вёрстка матчей.
+      expect(seen[seen.length - 1]).toEqual({ ...options, levelGap: 179, siblingGap: 8 })
+    })
+
+    it('полоса не показана — свайпера нет', async () => {
+      const wrapper = mount(BracketRounds, {
+        propsData: { ...propsData, swipe: true, isShow: false },
+        attachTo: host(),
+      })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.classes()).not.toContain('tv-rounds--swipe')
+    })
   })
 
   it('ведёт к финалу по самой карточке и не трогает вертикаль', async () => {
@@ -71,7 +129,7 @@ describe('BracketRounds (Vue 2)', () => {
     document.body.appendChild(scroll)
 
     const wrapper = mount(BracketRounds, {
-      propsData: { ...propsData, scrollOnClick: true },
+      propsData,
       slots: {
         default:
           '<div class="tree-view__node" data-left="19.5"></div>' +
@@ -100,7 +158,6 @@ describe('BracketRounds (Vue 2)', () => {
   })
 
   it('карточек нет на экране — прокручивает по колонкам', async () => {
-    // Блок с горизонтальной прокруткой: в happy-dom размеры задаются руками.
     const scroll = document.createElement('div')
     scroll.style.overflowX = 'auto'
     Object.defineProperty(scroll, 'scrollWidth', { value: 1000 })
@@ -109,7 +166,7 @@ describe('BracketRounds (Vue 2)', () => {
     document.body.appendChild(scroll)
 
     const wrapper = mount(BracketRounds, {
-      propsData: { ...propsData, scrollOnClick: true },
+      propsData,
       attachTo: scroll.appendChild(document.createElement('div')),
     })
 
