@@ -15,6 +15,24 @@ export {
   type BracketCardRow,
   type BracketCardTeam,
 } from './bracket'
+export {
+  buildBracketRounds,
+  roundScrollLeft,
+  type BracketRound,
+  type BracketRoundColumn,
+  type BracketRoundsModel,
+  type BracketRoundsOptions,
+  type RoundScrollBox,
+} from './rounds'
+export {
+  findScrollParent,
+  smoothScrollLeft,
+  offsetWithin,
+  nodesInColumn,
+  scrollToNode,
+  TREE_NODE_SELECTOR,
+} from './scroll'
+export { watchMedia, MOBILE_MEDIA_QUERY } from './media'
 export { layoutTree, placeNodes, flatten, type Placement, type Placements } from './layout'
 export { buildLinks, buildPath, getAnchors } from './links'
 export { PanZoomController, ZOOM_STEP, type PanZoomParams } from './panZoom'
