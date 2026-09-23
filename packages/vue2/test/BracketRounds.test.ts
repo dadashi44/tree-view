@@ -61,7 +61,15 @@ describe('BracketRounds (Vue 2)', () => {
     expect(wrapper.emitted('select')![0]![0]).toMatchObject({ id: 2, name: '1/2', index: 1 })
   })
 
-  it('нажатие подводит экран к матчам раунда — и к финалу тоже', async () => {
+  it('ведёт к финалу по самой карточке и не трогает вертикаль', async () => {
+    const scroll = document.createElement('div')
+    scroll.style.overflowX = 'auto'
+    Object.defineProperty(scroll, 'scrollWidth', { value: 1000 })
+    Object.defineProperty(scroll, 'clientWidth', { value: 500 })
+    scroll.getBoundingClientRect = () => ({ left: 0 }) as DOMRect
+    scroll.scrollTo = vi.fn()
+    document.body.appendChild(scroll)
+
     const wrapper = mount(BracketRounds, {
       propsData: { ...propsData, scrollOnClick: true },
       slots: {
@@ -69,7 +77,7 @@ describe('BracketRounds (Vue 2)', () => {
           '<div class="tree-view__node" data-left="19.5"></div>' +
           '<div class="tree-view__node" data-left="519.5"></div>',
       },
-      attachTo: document.body.appendChild(document.createElement('div')),
+      attachTo: scroll.appendChild(document.createElement('div')),
     })
 
     const content = wrapper.find('.tv-rounds__content').element
@@ -85,13 +93,10 @@ describe('BracketRounds (Vue 2)', () => {
 
     await wrapper.findAll('.tv-rounds__item').at(2).trigger('click')
 
-    // Финал — вторая карточка: к ней и ведём, по обеим осям.
-    expect(cards.at(1).element.scrollIntoView).toHaveBeenCalledWith({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'center',
-    })
-    expect(cards.at(0).element.scrollIntoView).not.toHaveBeenCalled()
+    // Финал: 519.5 + 105.5 − 250 = 375, дальше упор в правый край.
+    expect(scroll.scrollTo).toHaveBeenCalledWith({ left: 375, behavior: 'smooth' })
+    // Вертикаль не трогаем: страница остаётся там, где была.
+    expect(cards.at(1).element.scrollIntoView).not.toHaveBeenCalled()
   })
 
   it('карточек нет на экране — прокручивает по колонкам', async () => {

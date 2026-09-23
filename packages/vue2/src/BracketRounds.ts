@@ -3,10 +3,10 @@ import {
   MOBILE_MEDIA_QUERY,
   buildBracketRounds,
   findScrollParent,
+  horizontalBox,
   nodesInColumn,
   offsetWithin,
   roundScrollLeft,
-  scrollToNode,
   smoothScrollLeft,
   watchMedia,
   type BracketRound,
@@ -69,32 +69,36 @@ export default Vue.extend({
 
   methods: {
     /**
-     * Подводит сетку к матчам раунда.
+     * Подводит сетку к матчам раунда — только по горизонтали.
      *
-     * Сначала пробуем по самим карточкам: браузер сам подвинет и страницу, и блок
-     * с прокруткой, поэтому финал оказывается на экране целиком, а не только
-     * «где-то справа». Карточек не нашли (виртуализация) — считаем по колонкам.
+     * Меряем по самой карточке: так раунд встаёт по центру экрана точно, а у финала
+     * прокрутка упирается в правый край и он виден целиком. Карточек не нашли
+     * (виртуализация) — считаем по колонке, она той же ширины и на том же месте.
+     *
+     * Вертикаль не трогаем: страница остаётся там, где была.
      */
     scrollToRound(column: BracketRoundColumn): void {
-      const content = this.$refs.content as HTMLElement | undefined
-      const matches = content
-        ? nodesInColumn(content, column.index, column.width, this.model.offset)
-        : []
-      const middle = matches[Math.floor(matches.length / 2)]
-
-      if (middle && scrollToNode(middle)) return
-
       const element = this.$el as HTMLElement | null
       const container = findScrollParent(element)
       if (!element || !container) return
 
-      const left = offsetWithin(element, container) + column.index * column.width
+      const content = this.$refs.content as HTMLElement | undefined
+      // Карточки раунда стоят друг под другом, поэтому по горизонтали годится любая.
+      const card = content
+        ? nodesInColumn(content, column.index, column.width, this.model.offset)[0]
+        : undefined
+
+      const box = card
+        ? horizontalBox(card, container)
+        : {
+            left: offsetWithin(element, container) + column.index * column.width,
+            width: column.width,
+          }
 
       smoothScrollLeft(
         container,
         roundScrollLeft({
-          left,
-          width: column.width,
+          ...box,
           viewport: container.clientWidth,
           scrollWidth: container.scrollWidth,
         }),

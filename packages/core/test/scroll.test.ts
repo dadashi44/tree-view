@@ -2,9 +2,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   findScrollParent,
+  horizontalBox,
   nodesInColumn,
   offsetWithin,
-  scrollToNode,
   smoothScrollLeft,
 } from '../src/scroll'
 
@@ -120,24 +120,16 @@ describe('nodesInColumn', () => {
   })
 })
 
-describe('scrollToNode', () => {
-  it('ведёт карточку в центр экрана по обеим осям', () => {
-    const node = document.createElement('div')
-    node.scrollIntoView = vi.fn()
+describe('horizontalBox', () => {
+  it('отдаёт место карточки внутри прокручиваемого блока', () => {
+    const container = document.createElement('div')
+    const card = document.createElement('div')
+    container.appendChild(card)
 
-    expect(scrollToNode(node)).toBe(true)
-    expect(node.scrollIntoView).toHaveBeenCalledWith({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'center',
-    })
-  })
+    container.getBoundingClientRect = () => ({ left: 10 }) as DOMRect
+    card.getBoundingClientRect = () => ({ left: 30, width: 211 }) as DOMRect
+    container.scrollLeft = 100
 
-  it('браузер не умеет — говорит об этом', () => {
-    const node = document.createElement('div')
-    // @ts-expect-error проверяем поведение в браузере без scrollIntoView
-    node.scrollIntoView = undefined
-
-    expect(scrollToNode(node)).toBe(false)
+    expect(horizontalBox(card, container)).toEqual({ left: 120, width: 211 })
   })
 })

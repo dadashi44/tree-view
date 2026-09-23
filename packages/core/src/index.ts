@@ -29,7 +29,7 @@ export {
   smoothScrollLeft,
   offsetWithin,
   nodesInColumn,
-  scrollToNode,
+  horizontalBox,
   TREE_NODE_SELECTOR,
 } from './scroll'
 export { watchMedia, MOBILE_MEDIA_QUERY } from './media'

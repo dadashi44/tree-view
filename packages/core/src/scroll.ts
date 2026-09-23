@@ -3,6 +3,10 @@
  *
  * Полоса раундов не знает, кто её прокручивает: на странице турнира это блок
  * с `overflow-x: auto` вокруг сетки. Поэтому нужный блок ищется по дереву вверх.
+ *
+ * Двигаем только по горизонтали. Вертикаль не трогаем специально: страница
+ * должна остаться там, где её оставил пользователь, — иначе сетка «прыгает»
+ * под руками просто от нажатия на раунд.
  */
 
 /**
@@ -78,13 +82,10 @@ export function nodesInColumn(
   })
 }
 
-/**
- * Плавно подводит карточку к центру экрана — и по горизонтали, и по вертикали.
- * Возвращает `false`, если браузер так не умеет: тогда остаётся ручной расчёт.
- */
-export function scrollToNode(node: HTMLElement): boolean {
-  if (typeof node.scrollIntoView !== 'function') return false
-
-  node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-  return true
+/** Горизонтальное место элемента внутри прокручиваемого блока. */
+export function horizontalBox(
+  element: HTMLElement,
+  container: HTMLElement,
+): { left: number; width: number } {
+  return { left: offsetWithin(element, container), width: element.getBoundingClientRect().width }
 }
