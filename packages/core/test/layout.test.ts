@@ -260,13 +260,27 @@ describe('levelLayout: stack', () => {
       levelLayout: 'stack',
     })
 
-  it('каждый уровень начинается с начала полосы', () => {
+  it('каждый уровень стоит по центру самого населённого', () => {
     const layout = stacked()
     const tops = ['q1', 'semi-1', 'final'].map(
       (id) => layout.nodes.find((node) => node.id === id)!.y,
     )
 
-    expect(tops).toEqual([0, 0, 0])
+    // Четвертьфиналы занимают 230, полуфиналы 110, финал 50 — сдвиг по половине разницы.
+    expect(tops).toEqual([0, 60, 90])
+  })
+
+  it('центры уровней совпадают', () => {
+    const layout = stacked()
+    const centerOf = (id: string) => {
+      const node = layout.nodes.find((item) => item.id === id)!
+      return node.y + node.height / 2
+    }
+
+    expect(centerOf('final')).toBe(layout.height / 2)
+    expect(centerOf('semi-1') + (centerOf('semi-2') - centerOf('semi-1')) / 2).toBe(
+      layout.height / 2,
+    )
   })
 
   it('узлы уровня идут подряд с его отступом', () => {

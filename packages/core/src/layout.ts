@@ -82,13 +82,14 @@ function placeLevels(
 }
 
 /**
- * Раскладка «уровнями»: каждый уровень укладывается сам по себе, узел за узлом
- * от начала полосы. Родитель больше не садится по центру детей — зато высота
- * уровня зависит только от того, сколько на нём узлов и какой у них отступ.
+ * Раскладка «уровнями»: каждый уровень укладывается сам по себе, узел за узлом,
+ * и целиком центруется относительно самого населённого уровня. Родитель больше
+ * не садится по центру детей — зато высота уровня зависит только от того,
+ * сколько на нём узлов и какой у них отступ.
  *
  * Пригождается, когда уровни показывают по одному: в свайпере турнирной сетки
- * раунд из восьми матчей и полуфинал из двух каждый начинаются сверху и
- * получают свой отступ, а не тот, что достался от соседнего уровня.
+ * раунд из восьми матчей и полуфинал из двух получают каждый свой отступ,
+ * а не тот, что достался от соседнего уровня, и оба стоят по центру экрана.
  */
 function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Placements {
   const vertical = options.direction === 'top-to-bottom' || options.direction === 'bottom-to-top'
@@ -99,7 +100,12 @@ function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Place
 
   for (const node of flatten(roots)) (levels[node.depth] ??= []).push(node)
 
+  /** Места по уровням и то, сколько уровень занял поперёк. */
+  const byLevel: Placement[][] = []
+  const extents: number[] = []
+
   levels.forEach((level, depth) => {
+    const placements: Placement[] = []
     let cursor = 0
 
     for (const node of level) {
@@ -112,10 +118,23 @@ function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Place
 
       const placement: Placement = { depth, along: 0, across: cursor, alongSize, acrossSize }
       byId.set(node.id, placement)
+      placements.push(placement)
       order.push(placement)
 
       cursor += acrossSize + gapOf(options.siblingGap, node, level.length)
     }
+
+    const last = placements[placements.length - 1]
+    byLevel[depth] = placements
+    extents[depth] = last ? last.across + last.acrossSize : 0
+  })
+
+  // Второй проход по уровням: короткие сдвигаются к центру самого длинного.
+  const widest = Math.max(0, ...extents)
+
+  byLevel.forEach((placements, depth) => {
+    const shift = (widest - (extents[depth] ?? 0)) / 2
+    if (shift > 0) for (const placement of placements) placement.across += shift
   })
 
   return { byId, ...placeLevels(order, levelSizes, options.levelGap) }
