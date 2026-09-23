@@ -204,11 +204,13 @@ defineExpose({
   >
     <div ref="canvasElement" class="tree-view__canvas" :style="canvasStyle">
       <svg class="tree-view__links" :width="layout.width" :height="layout.height">
-        <template v-for="link in drawn.links" :key="link.id">
+        <!-- data-depth — уровень, из которого линия выходит: по нему её находят
+             снаружи, например когда полоса раундов прячет пройденное. -->
+        <g v-for="link in drawn.links" :key="link.id" :data-depth="link.target.depth">
           <slot name="link" :link="link">
             <path class="tree-view__link" :d="link.path" />
           </slot>
-        </template>
+        </g>
       </svg>
 
       <div
@@ -217,6 +219,7 @@ defineExpose({
         class="tree-view__node"
         :class="nodeClassOf(node)"
         :style="nodeStyle(node)"
+        :data-depth="node.depth"
         @click="onNodeClick(node, $event)"
       >
         <!--

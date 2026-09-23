@@ -247,10 +247,14 @@ export default Vue.extend({
     const drawn = this.drawn
     const linkSlot = this.$scopedSlots.link
 
+    // data-depth — уровень, из которого линия выходит: по нему её находят
+    // снаружи, например когда полоса раундов прячет пройденное.
     const links = drawn.links.map((link) =>
-      linkSlot
-        ? ((linkSlot({ link }) ?? []) as VNode[])
-        : h('path', { key: link.id, class: 'tree-view__link', attrs: { d: link.path } }),
+      h('g', { key: link.id, attrs: { 'data-depth': link.target.depth } }, [
+        linkSlot
+          ? ((linkSlot({ link }) ?? []) as VNode[])
+          : h('path', { class: 'tree-view__link', attrs: { d: link.path } }),
+      ]),
     )
 
     const nodes = drawn.nodes.map((node) =>
@@ -260,6 +264,7 @@ export default Vue.extend({
           key: node.id,
           class: ['tree-view__node', this.nodeClassOf(node)],
           style: this.nodeStyle(node),
+          attrs: { 'data-depth': node.depth },
           on: { click: (event: MouseEvent) => this.onNodeClick(node, event) },
         },
         ([] as VNode[]).concat(this.renderNodeContent(h, node)),
