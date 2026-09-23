@@ -4,7 +4,13 @@
  * Точно такая же конструкция используется на странице турнира в clientFrontend.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { BracketCard, TreeView, bracketCardHeight, type TreeViewOptions } from '@bigplay/tree-view'
+import {
+  BracketCard,
+  BracketRounds,
+  TreeView,
+  bracketCardHeight,
+  type TreeViewOptions,
+} from '@bigplay/tree-view'
 import { toFlatMatches, toTreeMatches, type BracketMatch, type BracketTeam } from '../data/buildBracket'
 import type { ApiGrid } from '../data/tournament'
 
@@ -19,8 +25,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{ (e: 'select', match: BracketMatch, team: BracketTeam): void }>()
 
-/** Ширина колонки раунда = карточка + промежуток между уровнями. */
-const COLUMN_WIDTH = 250
+/** Размеры карточки и промежутка. По ним же полоса раундов считает свои колонки. */
+const NODE_WIDTH = 211
+const LEVEL_GAP = 39
 
 const isFinal = (match: BracketMatch) => match.nextId == null
 
@@ -28,11 +35,11 @@ const isFinal = (match: BracketMatch) => match.nextId == null
 const rowsOf = (match: BracketMatch) => (isFinal(match) ? 1 : 2)
 
 const options: TreeViewOptions<BracketMatch> = {
-  nodeWidth: 211,
+  nodeWidth: NODE_WIDTH,
   // Высота — по числу строк карточки: финал ровно в одну строку,
   // остальные матчи в две. Линия всё равно придёт в середину карточки.
   nodeHeight: (node) => bracketCardHeight(node.data, { rows: rowsOf(node.data) }),
-  levelGap: COLUMN_WIDTH - 211,
+  levelGap: LEVEL_GAP,
   siblingGap: 32,
   direction: 'right-to-left',
   linkStyle: 'elbow',
@@ -64,38 +71,35 @@ watch(
     <div class="grid-scroll">
       <!-- В интерактивном режиме сетку двигают и масштабируют,
            поэтому колонки раундов перестали бы совпадать с матчами. -->
-      <div v-if="!interactive" class="rounds">
-        <div
-          v-for="round in grid.rounds"
-          :key="round.id"
-          class="round-item"
-          :style="{ width: `${COLUMN_WIDTH}px` }"
-        >
-          {{ round.name }}
-        </div>
-      </div>
-
-      <TreeView
-        ref="tree"
-        :data="data"
-        :options="options"
-        :get-id="(match: BracketMatch) => match.id"
-        :get-parent-id="getParentId"
-        :size="interactive ? 'fill' : 'content'"
-        :pannable="interactive"
-        :zoomable="interactive"
-        :fit-on-mount="interactive"
-        :style="interactive ? { height: '520px' } : undefined"
+      <BracketRounds
+        :rounds="grid.rounds"
+        :node-width="NODE_WIDTH"
+        :level-gap="LEVEL_GAP"
+        :is-show="!interactive"
+        @select="(round) => console.log('Клик по раунду', round.name)"
       >
-        <template #node="{ data: match }">
-          <!-- Карточка из пакета: та же вёрстка, что в админке и на клиенте. -->
-          <BracketCard
-            :match="match as BracketMatch"
-            :rows="rowsOf(match as BracketMatch)"
-            @select="emit('select', match as BracketMatch, $event as BracketTeam)"
-          />
-        </template>
-      </TreeView>
+        <TreeView
+          ref="tree"
+          :data="data"
+          :options="options"
+          :get-id="(match: BracketMatch) => match.id"
+          :get-parent-id="getParentId"
+          :size="interactive ? 'fill' : 'content'"
+          :pannable="interactive"
+          :zoomable="interactive"
+          :fit-on-mount="interactive"
+          :style="interactive ? { height: '520px' } : undefined"
+        >
+          <template #node="{ data: match }">
+            <!-- Карточка из пакета: та же вёрстка, что в админке и на клиенте. -->
+            <BracketCard
+              :match="match as BracketMatch"
+              :rows="rowsOf(match as BracketMatch)"
+              @select="emit('select', match as BracketMatch, $event as BracketTeam)"
+            />
+          </template>
+        </TreeView>
+      </BracketRounds>
     </div>
   </section>
 </template>

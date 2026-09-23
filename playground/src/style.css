@@ -10,7 +10,6 @@
   --loser-bg: #e5e5e5;
   --loser-text: #7d7d8d;
   --page-bg: #ffffff;
-  --rounds-bg: #f5f5f7;
   --border: #e5e7eb;
 }
 
@@ -116,30 +115,6 @@ body {
 .grid-scroll {
   width: 100%;
   overflow-x: auto;
-}
-
-.rounds {
-  display: flex;
-  /* Полоса должна быть шириной во всю сетку, а не во весь экран:
-     иначе при горизонтальном скролле фон и линия обрываются на полпути. */
-  width: max-content;
-  min-width: 100%;
-  /* Отступ, чтобы шапка раундов не прилипала к первым карточкам. */
-  margin-bottom: 20px;
-  background: var(--rounds-bg);
-  border-bottom: 2px solid var(--border);
-}
-
-.round-item {
-  flex: none;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-align: center;
-  text-transform: uppercase;
-  white-space: nowrap;
-  border-right: 2px solid var(--border);
 }
 
 /* ── Модалка матча ──────────────────────────────────────────── */
