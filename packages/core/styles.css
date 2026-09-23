@@ -234,6 +234,10 @@
   --tv-rounds-border: 2px solid #e5e7eb;
   --tv-rounds-gap: 20px;
   --tv-rounds-fade: 220ms;
+  /* В свайпере линия — единственная подсказка, что матч идёт дальше,
+     поэтому она заметнее, чем на широком экране. */
+  --tv-rounds-link-color: #94a3b8;
+  --tv-rounds-link-width: 3px;
 
   display: flex;
   flex-direction: column;
@@ -273,6 +277,12 @@
  * прилипают к границе раунда. Сетка при этом одна — линии между
  * матчами никуда не деваются.
  */
+
+/* Линии в свайпере: единственное, что показывает, куда матч идёт дальше. */
+.tv-rounds--swipe .tree-view {
+  --tv-link-color: var(--tv-rounds-link-color);
+  --tv-link-width: var(--tv-rounds-link-width);
+}
 
 .tv-rounds--swipe {
   width: 100%;
