@@ -206,3 +206,91 @@ describe('размер карточки функцией', () => {
     expect(seen).toContainEqual({ id: 'qf-1', depth: 2, hasChildren: false })
   })
 })
+
+describe('siblingGap функцией', () => {
+  it('спрашивает отступ у каждого узла и сообщает размер уровня', () => {
+    const seen: Array<[string, number]> = []
+
+    layoutTree(toTree({ id: 'root', children: [{ id: 'a' }, { id: 'b' }] }), {
+      nodeWidth: 100,
+      nodeHeight: 50,
+      siblingGap: (node, count) => {
+        seen.push([node.id, count])
+        return 10
+      },
+    })
+
+    expect(seen).toEqual([
+      ['a', 2],
+      ['b', 2],
+      ['root', 1],
+    ])
+  })
+
+  it('разным уровням — разные отступы', () => {
+    const layout = layoutTree(toTree({ id: 'root', children: [{ id: 'a' }, { id: 'b' }] }), {
+      nodeWidth: 100,
+      nodeHeight: 50,
+      siblingGap: (_node, count) => count * 10,
+    })
+
+    const [a, b] = ['a', 'b'].map((id) => layout.nodes.find((node) => node.id === id)!)
+
+    // Два узла на уровне — отступ 20.
+    expect(b.x - (a.x + a.width)).toBe(20)
+  })
+})
+
+describe('levelLayout: stack', () => {
+  const data = {
+    id: 'final',
+    children: [
+      { id: 'semi-1', children: [{ id: 'q1' }, { id: 'q2' }] },
+      { id: 'semi-2', children: [{ id: 'q3' }, { id: 'q4' }] },
+    ],
+  }
+
+  const stacked = () =>
+    layoutTree(toTree(data), {
+      nodeWidth: 100,
+      nodeHeight: 50,
+      levelGap: 20,
+      siblingGap: 10,
+      direction: 'right-to-left',
+      levelLayout: 'stack',
+    })
+
+  it('каждый уровень начинается с начала полосы', () => {
+    const layout = stacked()
+    const tops = ['q1', 'semi-1', 'final'].map(
+      (id) => layout.nodes.find((node) => node.id === id)!.y,
+    )
+
+    expect(tops).toEqual([0, 0, 0])
+  })
+
+  it('узлы уровня идут подряд с его отступом', () => {
+    const layout = stacked()
+    const [q1, q2] = ['q1', 'q2'].map((id) => layout.nodes.find((node) => node.id === id)!)
+
+    expect(q2.y - (q1.y + q1.height)).toBe(10)
+  })
+
+  it('высота — по самому населённому уровню', () => {
+    // Четыре четвертьфинала: 4 × 50 + 3 × 10.
+    expect(stacked().height).toBe(230)
+  })
+
+  it('родитель больше не сидит по центру детей', () => {
+    const layout = stacked()
+    const semi = layout.nodes.find((node) => node.id === 'semi-2')!
+    const children = ['q3', 'q4'].map((id) => layout.nodes.find((node) => node.id === id)!)
+    const center = (children[0]!.y + children[1]!.y + children[1]!.height) / 2
+
+    expect(semi.y + semi.height / 2).not.toBe(center)
+  })
+
+  it('линии всё равно строятся между уровнями', () => {
+    expect(stacked().links).toHaveLength(6)
+  })
+})

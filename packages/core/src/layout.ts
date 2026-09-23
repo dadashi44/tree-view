@@ -1,6 +1,6 @@
 import { resolveOptions } from './defaults'
 import { buildLinks } from './links'
-import type { Layout, LayoutNode, NodeSize, TreeNode, TreeViewOptions } from './types'
+import type { GapSize, Layout, LayoutNode, NodeSize, TreeNode, TreeViewOptions } from './types'
 
 /**
  * Раскладка работает в двух «своих» осях, чтобы не писать четыре варианта кода:
@@ -35,6 +35,92 @@ function sizeOf<T>(size: NodeSize<T>, node: TreeNode<T>): number {
   return typeof size === 'function' ? size(node) : size
 }
 
+/** Отступ после конкретного узла. Функции сообщаем, сколько народу на уровне. */
+function gapOf<T>(gap: GapSize<T>, node: TreeNode<T>, levelCount: number): number {
+  return typeof gap === 'function' ? gap(node, levelCount) : gap
+}
+
+/** Сколько узлов на каждом уровне — это нужно `siblingGap`-функции. */
+function countByDepth<T>(roots: TreeNode<T>[]): number[] {
+  const counts: number[] = []
+
+  for (const node of flatten(roots)) counts[node.depth] = (counts[node.depth] ?? 0) + 1
+
+  return counts
+}
+
+/**
+ * Второй проход, общий для обеих раскладок: толщина уровней уже известна,
+ * остаётся расставить их друг за другом и центровать карточки поменьше.
+ */
+function placeLevels(
+  order: Placement[],
+  levelSizes: number[],
+  levelGap: number,
+): { alongExtent: number; acrossExtent: number } {
+  const levelOffsets: number[] = []
+  let offset = 0
+
+  for (let depth = 0; depth < levelSizes.length; depth += 1) {
+    levelOffsets[depth] = offset
+    offset += (levelSizes[depth] ?? 0) + levelGap
+  }
+
+  let acrossExtent = 0
+
+  for (const placement of order) {
+    const levelSize = levelSizes[placement.depth] ?? placement.alongSize
+    // Карточка меньше своего уровня — стоит по центру полосы, а не по краю.
+    placement.along = levelOffsets[placement.depth]! + (levelSize - placement.alongSize) / 2
+    acrossExtent = Math.max(acrossExtent, placement.across + placement.acrossSize)
+  }
+
+  const lastLevel = levelSizes.length - 1
+  const alongExtent = lastLevel < 0 ? 0 : levelOffsets[lastLevel]! + levelSizes[lastLevel]!
+
+  return { alongExtent, acrossExtent }
+}
+
+/**
+ * Раскладка «уровнями»: каждый уровень укладывается сам по себе, узел за узлом
+ * от начала полосы. Родитель больше не садится по центру детей — зато высота
+ * уровня зависит только от того, сколько на нём узлов и какой у них отступ.
+ *
+ * Пригождается, когда уровни показывают по одному: в свайпере турнирной сетки
+ * раунд из восьми матчей и полуфинал из двух каждый начинаются сверху и
+ * получают свой отступ, а не тот, что достался от соседнего уровня.
+ */
+function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Placements {
+  const vertical = options.direction === 'top-to-bottom' || options.direction === 'bottom-to-top'
+  const byId = new Map<string, Placement>()
+  const order: Placement[] = []
+  const levelSizes: number[] = []
+  const levels: TreeNode<T>[][] = []
+
+  for (const node of flatten(roots)) (levels[node.depth] ??= []).push(node)
+
+  levels.forEach((level, depth) => {
+    let cursor = 0
+
+    for (const node of level) {
+      const width = sizeOf(options.nodeWidth, node)
+      const height = sizeOf(options.nodeHeight, node)
+      const alongSize = vertical ? height : width
+      const acrossSize = vertical ? width : height
+
+      levelSizes[depth] = Math.max(levelSizes[depth] ?? 0, alongSize)
+
+      const placement: Placement = { depth, along: 0, across: cursor, alongSize, acrossSize }
+      byId.set(node.id, placement)
+      order.push(placement)
+
+      cursor += acrossSize + gapOf(options.siblingGap, node, level.length)
+    }
+  })
+
+  return { byId, ...placeLevels(order, levelSizes, options.levelGap) }
+}
+
 /**
  * Считает место каждого узла.
  *
@@ -48,7 +134,10 @@ function sizeOf<T>(size: NodeSize<T>, node: TreeNode<T>): number {
  * карточка на нём, а карточки поменьше центруются внутри этой полосы.
  */
 export function placeNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Placements {
+  if (options.levelLayout === 'stack') return stackNodes(roots, options)
+
   const vertical = options.direction === 'top-to-bottom' || options.direction === 'bottom-to-top'
+  const counts = countByDepth(roots)
   const byId = new Map<string, Placement>()
   /** Те же места, но по порядку размещения — нужно, чтобы двигать ветку целиком. */
   const order: Placement[] = []
@@ -93,32 +182,16 @@ export function placeNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>)
     order.push(placement)
 
     // Соседям — стартовать за самым правым краем ветки, включая саму карточку.
-    cursor = Math.max(cursor, across + acrossSize + options.siblingGap)
+    cursor = Math.max(
+      cursor,
+      across + acrossSize + gapOf(options.siblingGap, node, counts[node.depth] ?? 1),
+    )
     return placement
   }
 
   roots.forEach(place)
 
-  // Второй проход: толщина уровней уже известна, можно расставить их друг за другом.
-  const levelOffsets: number[] = []
-  let offset = 0
-  for (let depth = 0; depth < levelSizes.length; depth += 1) {
-    levelOffsets[depth] = offset
-    offset += (levelSizes[depth] ?? 0) + options.levelGap
-  }
-
-  let acrossExtent = 0
-  for (const placement of order) {
-    const levelSize = levelSizes[placement.depth] ?? placement.alongSize
-    // Карточка меньше своего уровня — стоит по центру полосы, а не по краю.
-    placement.along = levelOffsets[placement.depth]! + (levelSize - placement.alongSize) / 2
-    acrossExtent = Math.max(acrossExtent, placement.across + placement.acrossSize)
-  }
-
-  const lastLevel = levelSizes.length - 1
-  const alongExtent = lastLevel < 0 ? 0 : levelOffsets[lastLevel]! + levelSizes[lastLevel]!
-
-  return { byId, alongExtent, acrossExtent }
+  return { byId, ...placeLevels(order, levelSizes, options.levelGap) }
 }
 
 /** Разворачивает дерево в плоский массив (порядок — «сверху вниз», как в данных). */

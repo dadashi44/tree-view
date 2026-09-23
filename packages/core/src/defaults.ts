@@ -8,6 +8,7 @@ export const DEFAULT_OPTIONS: TreeViewOptions = {
   siblingGap: 16,
   direction: 'top-to-bottom',
   linkStyle: 'elbow',
+  levelLayout: 'tree',
 }
 
 /**
