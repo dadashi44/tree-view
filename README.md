@@ -162,6 +162,60 @@ const options = {
 Без Vue то же самое доступно функцией `buildBracketCard(match, { rows })` из core —
 она возвращает готовый список строк.
 
+### Полоса раундов
+
+Шапка с названиями раундов — тоже в пакете. Сетку кладут внутрь, и она получает
+отступ, после которого матчи стоят **по центру своего раунда**: колонка шире карточки
+ровно на `levelGap`, без этого отступа карточки прижимались бы к левому краю.
+
+```vue
+<script setup>
+import { BracketCard, BracketRounds, TreeView } from '@bigplay/tree-view'
+
+const NODE_WIDTH = 211
+const LEVEL_GAP = 39
+
+const options = { nodeWidth: NODE_WIDTH, levelGap: LEVEL_GAP, direction: 'right-to-left' }
+</script>
+
+<template>
+  <!-- Блок с overflow-x: auto вокруг — его полоса и прокручивает. -->
+  <div class="grid-scroll">
+    <BracketRounds :rounds="rounds" :node-width="NODE_WIDTH" :level-gap="LEVEL_GAP">
+      <TreeView :data="matches" :options="options" :get-parent-id="(m) => m.nextId">
+        <template #node="{ data: match }">
+          <BracketCard :match="match" />
+        </template>
+      </TreeView>
+    </BracketRounds>
+  </div>
+</template>
+```
+
+Выглядит полоса везде одинаково. На узком экране у раундов появляется нажатие:
+сетка плавно подъезжает к матчам этого раунда — и по горизонтали, и по вертикали,
+поэтому финал оказывается на экране целиком, а не «где-то справа».
+Ведёт к самим карточкам; если сетка их не нарисовала (виртуализация) —
+прокручивает по колонкам ближайший предок с `overflow-x: auto`.
+
+| Проп | По умолчанию | Описание |
+| --- | --- | --- |
+| `rounds` | — | раунды по порядку, от первого к финалу: `{ id, name }` |
+| `nodeWidth` | `180` | то же число, что в `nodeWidth` у сетки |
+| `levelGap` | `60` | то же число, что в `levelGap` у сетки |
+| `isShow` | `true` | показывать полосу; содержимое слота рисуется в любом случае |
+| `scrollOnClick` | — | включить нажатие принудительно; не передан — решает ширина экрана |
+| `mobileQuery` | `'(max-width: 768px)'` | при каком экране включается нажатие |
+
+Событие `select` отдаёт раунд, по которому нажали: `{ id, name, index, width }`.
+На широком экране колонка раунда — подпись, а не кнопка, поэтому события там нет.
+Слот `#round` заменяет подпись, цвета меняются переменными
+`--tv-rounds-bg`, `--tv-rounds-color`, `--tv-rounds-border`.
+
+Без Vue то же самое считают функции из core: `buildBracketRounds(rounds, { nodeWidth,
+levelGap })` возвращает колонки, ширину полосы и тот самый `offset`,
+а `roundScrollLeft({ left, width, viewport, scrollWidth })` — куда прокрутить.
+
 Ещё три способа настроить внешний вид:
 
 1. **CSS-переменные** — быстрый способ поменять цвета, не трогая разметку:
