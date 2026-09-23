@@ -33,12 +33,14 @@ import {
   roundAtScroll,
   roundOfDepth,
   roundScrollLeft,
+  roundSiblingGap,
   smoothScrollLeft,
   watchChildren,
   watchMedia,
   watchWidth,
   type BracketRound,
   type BracketRoundColumn,
+  type TreeNode,
   type TreeViewOptions,
 } from '@bigplay/tree-view-core'
 
@@ -50,7 +52,10 @@ const props = withDefaults(
     options?: Partial<TreeViewOptions>
     /** Показывать полосу. Содержимое слота рисуется в любом случае. */
     isShow?: boolean
-    /** Расстояние между матчами одного раунда в режиме свайпера. */
+    /**
+     * Базовое расстояние между матчами одного раунда в свайпере.
+     * Раунд с несколькими матчами получает кратно больше — до четырёх раз.
+     */
     swipeSiblingGap?: number
     /** Прятать пройденные раунды и линии, которые из них выходят. */
     hidePassed?: boolean
@@ -113,10 +118,22 @@ const mirrored = computed(
   () => base.value.direction === 'right-to-left' || base.value.direction === 'bottom-to-top',
 )
 
-/** Настройки для сетки: в свайпере — с растянутыми раундами и сжатыми матчами. */
+/**
+ * Настройки для сетки в свайпере.
+ *
+ * Раунды растягиваются на ширину экрана, а уровни укладываются каждый сам по
+ * себе: в дереве место второго раунда выводится из первого, поэтому отдельно
+ * его отступ не задать. Сам отступ зависит от того, сколько матчей в раунде.
+ */
 const gridOptions = computed<Partial<TreeViewOptions>>(() =>
   isSwipe.value
-    ? { ...props.options, levelGap: levelGap.value, siblingGap: props.swipeSiblingGap }
+    ? {
+        ...props.options,
+        levelGap: levelGap.value,
+        levelLayout: 'stack',
+        siblingGap: (_node: TreeNode<unknown>, count: number) =>
+          roundSiblingGap(count, props.swipeSiblingGap),
+      }
     : { ...props.options },
 )
 

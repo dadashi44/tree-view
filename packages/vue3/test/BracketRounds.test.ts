@@ -143,8 +143,16 @@ describe('BracketRounds', () => {
       })
       await nextTick()
 
+      const got = seen.at(-1)!
+
+      // siblingGap теперь функция, поэтому сверяем остальное по отдельности.
+      const { siblingGap: _base, ...rest } = options
+
       // Ширина карточки не меняется — иначе разъехалась бы вёрстка матчей.
-      expect(seen.at(-1)).toEqual({ ...options, levelGap: 179, siblingGap: 8 })
+      expect(got).toMatchObject({ ...rest, levelGap: 179, levelLayout: 'stack' })
+      // Отступ зависит от того, сколько матчей в раунде: в первом их больше.
+      expect((got.siblingGap as (n: unknown, c: number) => number)(null, 4)).toBe(32)
+      expect((got.siblingGap as (n: unknown, c: number) => number)(null, 2)).toBe(16)
     })
 
     it('пройденные раунды и их линии прячутся', async () => {
