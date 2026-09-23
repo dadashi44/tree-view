@@ -172,49 +172,63 @@ const options = {
 <script setup>
 import { BracketCard, BracketRounds, TreeView } from '@bigplay/tree-view'
 
-const NODE_WIDTH = 211
-const LEVEL_GAP = 39
-
-const options = { nodeWidth: NODE_WIDTH, levelGap: LEVEL_GAP, direction: 'right-to-left' }
+const options = { nodeWidth: 211, levelGap: 39, siblingGap: 32, direction: 'right-to-left' }
 </script>
 
 <template>
-  <!-- Блок с overflow-x: auto вокруг — его полоса и прокручивает. -->
+  <!-- Блок с overflow-x: auto вокруг — его полоса и прокручивает на широком экране. -->
   <div class="grid-scroll">
-    <BracketRounds :rounds="rounds" :node-width="NODE_WIDTH" :level-gap="LEVEL_GAP">
-      <TreeView :data="matches" :options="options" :get-parent-id="(m) => m.nextId">
-        <template #node="{ data: match }">
-          <BracketCard :match="match" />
-        </template>
-      </TreeView>
+    <BracketRounds :rounds="rounds" :options="options">
+      <!-- options из слота подогнаны под экран. -->
+      <template #default="{ options: gridOptions }">
+        <TreeView :data="matches" :options="gridOptions" :get-parent-id="(m) => m.nextId">
+          <template #node="{ data: match }">
+            <BracketCard :match="match" />
+          </template>
+        </TreeView>
+      </template>
     </BracketRounds>
   </div>
 </template>
 ```
 
-Выглядит полоса везде одинаково. На узком экране у раундов появляется нажатие:
-ближайший предок с `overflow-x: auto` плавно подъезжает к матчам этого раунда.
-Двигается **только горизонталь** — страница остаётся там, где была, иначе сетка
-прыгала бы под руками от одного нажатия. Место считается по самой карточке;
-если сетка её не нарисовала (виртуализация) — по колонке, она там же и той же ширины.
+**На узком экране полоса превращается в свайпер.** Раунд занимает всю ширину
+родительского блока, шапка и сетка листаются пальцем вместе и прилипают к границе
+раунда (`scroll-snap`), а матчи внутри раунда встают ближе друг к другу.
+Пройденные раунды прячутся вместе с линиями, которые из них выходят, —
+на экране остаются текущий раунд и то, что дальше.
+
+Сетка при этом остаётся одна: меняются только `levelGap` и `siblingGap`,
+поэтому линии между матчами никуда не деваются. Настройки с новыми числами
+приходят в слот — их и передают в `TreeView`.
 
 | Проп | По умолчанию | Описание |
 | --- | --- | --- |
 | `rounds` | — | раунды по порядку, от первого к финалу: `{ id, name }` |
-| `nodeWidth` | `180` | то же число, что в `nodeWidth` у сетки |
-| `levelGap` | `60` | то же число, что в `levelGap` у сетки |
+| `options` | — | настройки сетки; те же, что уходят в `TreeView` |
 | `isShow` | `true` | показывать полосу; содержимое слота рисуется в любом случае |
-| `scrollOnClick` | — | включить нажатие принудительно; не передан — решает ширина экрана |
-| `mobileQuery` | `'(max-width: 768px)'` | при каком экране включается нажатие |
+| `swipeSiblingGap` | `12` | расстояние между матчами одного раунда в свайпере |
+| `hidePassed` | `true` | прятать пройденные раунды и их линии |
+| `swipe` | — | включить свайпер принудительно; не передан — решает ширина экрана |
+| `mobileQuery` | `'(max-width: 768px)'` | при каком экране включается свайпер |
 
-Событие `select` отдаёт раунд, по которому нажали: `{ id, name, index, width }`.
-На широком экране колонка раунда — подпись, а не кнопка, поэтому события там нет.
-Слот `#round` заменяет подпись, цвета меняются переменными
-`--tv-rounds-bg`, `--tv-rounds-color`, `--tv-rounds-border`.
+| Слот | Что даёт |
+| --- | --- |
+| `default` | `{ options, isSwipe, round }` — настройки под экран, режим и номер раунда |
+| `round` | `{ round }` — своя подпись колонки вместо названия |
 
-Без Vue то же самое считают функции из core: `buildBracketRounds(rounds, { nodeWidth,
-levelGap })` возвращает колонки, ширину полосы и тот самый `offset`,
-а `roundScrollLeft({ left, width, viewport, scrollWidth })` — куда прокрутить.
+| Событие | Аргументы | Когда |
+| --- | --- | --- |
+| `select` | `(round)` | нажали на раунд: `{ id, name, index, width }` |
+| `round` | `(index)` | свайп доехал до другого раунда |
+
+Нажатие на раунд подводит к нему сетку по горизонтали — страница при этом
+остаётся на месте. Тот же метод доступен через `ref`: `rounds.scrollToRound(column)`.
+Цвета меняются переменными `--tv-rounds-bg`, `--tv-rounds-color`, `--tv-rounds-border`.
+
+Без Vue то же самое считают функции из core: `buildBracketRounds`, `levelGapForWidth`
+(промежуток, при котором раунд занимает всю ширину), `roundAtScroll`, `roundOfDepth`,
+`roundScrollLeft` и `hideRoundsBefore`.
 
 Ещё три способа настроить внешний вид:
 
