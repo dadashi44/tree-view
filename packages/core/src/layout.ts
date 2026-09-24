@@ -111,7 +111,7 @@ function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Place
     const placements: Placement[] = []
     let cursor = 0
 
-    for (const node of level) {
+    level.forEach((node, index) => {
       const width = sizeOf(options.nodeWidth, node)
       const height = sizeOf(options.nodeHeight, node)
       const alongSize = vertical ? height : width
@@ -124,8 +124,16 @@ function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Place
       placements.push(placement)
       order.push(placement)
 
-      cursor += acrossSize + gapOf(options.siblingGap, node, level.length)
-    }
+      // Следующий узел из другой ветки — между ними промежуток крупнее:
+      // так видно, какие узлы сходятся в один на следующем уровне.
+      const next = level[index + 1]
+      const gap =
+        next && next.parentId !== node.parentId
+          ? (options.groupGap ?? options.siblingGap)
+          : options.siblingGap
+
+      cursor += acrossSize + gapOf(gap, node, level.length)
+    })
 
     const last = placements[placements.length - 1]
     byLevel[depth] = placements

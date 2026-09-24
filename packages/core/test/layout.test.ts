@@ -311,4 +311,30 @@ describe('levelLayout: stack', () => {
   it('линии всё равно строятся между уровнями', () => {
     expect(stacked().links).toHaveLength(6)
   })
+
+  it('groupGap разводит ветки, оставляя пару вместе', () => {
+    const layout = layoutTree(toTree(data), {
+      nodeWidth: 100,
+      nodeHeight: 50,
+      levelGap: 20,
+      siblingGap: 10,
+      groupGap: 40,
+      direction: 'right-to-left',
+      levelLayout: 'stack',
+    })
+    const y = (id: string) => layout.nodes.find((node) => node.id === id)!.y
+
+    // q1+q2 сходятся в один полуфинал — между ними тесно.
+    expect(y('q2') - (y('q1') + 50)).toBe(10)
+    // q3 уже из другой ветки — промежуток крупнее.
+    expect(y('q3') - (y('q2') + 50)).toBe(40)
+    expect(y('q4') - (y('q3') + 50)).toBe(10)
+  })
+
+  it('без groupGap уровень идёт ровным шагом', () => {
+    const layout = stacked()
+    const y = (id: string) => layout.nodes.find((node) => node.id === id)!.y
+
+    expect([y('q2') - y('q1'), y('q3') - y('q2'), y('q4') - y('q3')]).toEqual([60, 60, 60])
+  })
 })
