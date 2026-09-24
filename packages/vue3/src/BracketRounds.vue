@@ -128,8 +128,10 @@ const mirrored = computed(
  *
  * Внутри пары матчи стоят тесно, а между парами промежуток крупнее — иначе
  * весь раунд читается как один список и непонятно, кто с кем сходится дальше.
- * Линии пары сходятся сразу за карточками: промежуток между раундами во весь
- * экран, и колено посередине уехало бы далеко вправо.
+ * Линии рисуются скобкой: пара сходится в одну вертикаль сразу за карточками,
+ * и уже от её середины идёт линия к следующему матчу. В раскладке `'stack'`
+ * родитель стоит не по центру детей, поэтому обычная «ступенька» выходила бы
+ * из верхнего матча пары, а не из середины.
  */
 const gridOptions = computed<Partial<TreeViewOptions>>(() =>
   isSwipe.value
@@ -140,6 +142,7 @@ const gridOptions = computed<Partial<TreeViewOptions>>(() =>
         siblingGap: props.swipeSiblingGap,
         groupGap: (_node: TreeNode<unknown>, count: number) =>
           roundSiblingGap(count, props.swipeSiblingGap),
+        linkStyle: 'bracket',
         elbowOffset: props.options?.elbowOffset ?? SWIPE_ELBOW_OFFSET,
       }
     : { ...props.options },
