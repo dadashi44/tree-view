@@ -14,6 +14,7 @@ import {
   roundOfDepth,
   roundScrollLeft,
   roundSiblingGap,
+  SWIPE_ELBOW_OFFSET,
   smoothScrollLeft,
   watchChildren,
   watchMedia,
@@ -111,6 +112,8 @@ export default Vue.extend({
      *
      * Внутри пары матчи стоят тесно, а между парами промежуток крупнее — иначе
      * весь раунд читается как один список и непонятно, кто с кем сходится дальше.
+     * Линии пары сходятся сразу за карточками: промежуток между раундами во весь
+     * экран, и колено посередине уехало бы далеко вправо.
      */
     gridOptions(): Partial<TreeViewOptions> {
       if (!this.isSwipe) return { ...this.options }
@@ -123,6 +126,7 @@ export default Vue.extend({
         levelLayout: 'stack',
         siblingGap: base,
         groupGap: (_node: TreeNode<unknown>, count: number) => roundSiblingGap(count, base),
+        elbowOffset: this.options?.elbowOffset ?? SWIPE_ELBOW_OFFSET,
       }
     },
   },

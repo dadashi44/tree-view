@@ -34,6 +34,7 @@ import {
   roundOfDepth,
   roundScrollLeft,
   roundSiblingGap,
+  SWIPE_ELBOW_OFFSET,
   smoothScrollLeft,
   watchChildren,
   watchMedia,
@@ -127,6 +128,8 @@ const mirrored = computed(
  *
  * Внутри пары матчи стоят тесно, а между парами промежуток крупнее — иначе
  * весь раунд читается как один список и непонятно, кто с кем сходится дальше.
+ * Линии пары сходятся сразу за карточками: промежуток между раундами во весь
+ * экран, и колено посередине уехало бы далеко вправо.
  */
 const gridOptions = computed<Partial<TreeViewOptions>>(() =>
   isSwipe.value
@@ -137,6 +140,7 @@ const gridOptions = computed<Partial<TreeViewOptions>>(() =>
         siblingGap: props.swipeSiblingGap,
         groupGap: (_node: TreeNode<unknown>, count: number) =>
           roundSiblingGap(count, props.swipeSiblingGap),
+        elbowOffset: props.options?.elbowOffset ?? SWIPE_ELBOW_OFFSET,
       }
     : { ...props.options },
 )
