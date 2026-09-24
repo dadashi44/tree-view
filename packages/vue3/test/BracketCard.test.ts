@@ -86,3 +86,42 @@ describe('BracketCard', () => {
     expect(wrapper.emitted('select')).toBeUndefined()
   })
 })
+
+describe('BracketCard: сворачивание предыдущих матчей', () => {
+  it('без детей кнопки нет', () => {
+    const wrapper = mount(BracketCard, { props: { match } })
+
+    expect(wrapper.find('.tv-bracket__toggle').exists()).toBe(false)
+  })
+
+  it('с детьми показывает кнопку и отдаёт нажатие наружу', async () => {
+    const wrapper = mount(BracketCard, { props: { match, hasChildren: true } })
+    const toggle = wrapper.find('.tv-bracket__toggle')
+
+    expect(toggle.text()).toBe('−')
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+
+    await toggle.trigger('click')
+
+    expect(wrapper.emitted('toggle')).toHaveLength(1)
+  })
+
+  it('свёрнутый матч виден по кнопке', () => {
+    const wrapper = mount(BracketCard, {
+      props: { match, hasChildren: true, collapsed: true },
+    })
+    const toggle = wrapper.find('.tv-bracket__toggle')
+
+    expect(toggle.text()).toBe('+')
+    expect(toggle.classes()).toContain('tv-bracket__toggle--collapsed')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+  })
+
+  it('нажатие на кнопку не считается выбором команды', async () => {
+    const wrapper = mount(BracketCard, { props: { match, hasChildren: true } })
+
+    await wrapper.find('.tv-bracket__toggle').trigger('click')
+
+    expect(wrapper.emitted('select')).toBeUndefined()
+  })
+})

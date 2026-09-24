@@ -27,16 +27,30 @@ const props = withDefaults(
     techDefeatLabel?: string
     /** Подсказка по наведению на техническое поражение. */
     techDefeatHint?: string
+    /** У матча есть предыдущие — рисуем кнопку, которая их сворачивает. */
+    hasChildren?: boolean
+    /** Предыдущие матчи сейчас свёрнуты. */
+    collapsed?: boolean
+    /** Подписи кнопки для screen reader. */
+    collapseHint?: string
+    expandHint?: string
   }>(),
   {
     rows: undefined,
     myTeamHint: 'Нажми для перехода в матч 👇',
     techDefeatLabel: 'ТП',
     techDefeatHint: 'Техническое поражение',
+    hasChildren: false,
+    collapsed: false,
+    collapseHint: 'Свернуть предыдущие матчи',
+    expandHint: 'Показать предыдущие матчи',
   },
 )
 
-const emit = defineEmits<{ (e: 'select', team: BracketCardTeam, row: BracketCardRow): void }>()
+const emit = defineEmits<{
+  (e: 'select', team: BracketCardTeam, row: BracketCardRow): void
+  (e: 'toggle'): void
+}>()
 
 const hoveredKey = ref<string | null>(null)
 
@@ -52,6 +66,24 @@ function onRowClick(row: BracketCardRow): void {
 <template>
   <div class="tv-bracket" :class="{ 'tv-bracket--my-team': card.hasMyTeam }">
     <div v-if="card.hasMyTeam && myTeamHint" class="tv-bracket__hint">{{ myTeamHint }}</div>
+
+    <!--
+      Кнопка стоит со стороны предыдущих матчей — туда же уходят линии.
+      data-tv-no-pan: нажатие не должно утаскивать холст.
+    -->
+    <button
+      v-if="hasChildren"
+      type="button"
+      class="tv-bracket__toggle"
+      :class="{ 'tv-bracket__toggle--collapsed': collapsed }"
+      :title="collapsed ? expandHint : collapseHint"
+      :aria-label="collapsed ? expandHint : collapseHint"
+      :aria-expanded="!collapsed"
+      data-tv-no-pan
+      @click.stop="emit('toggle')"
+    >
+      {{ collapsed ? '+' : '−' }}
+    </button>
 
     <div
       v-for="row in card.rows"
