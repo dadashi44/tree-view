@@ -39,6 +39,13 @@ export type GapSize<T> = number | ((node: TreeNode<T>, levelCount: number) => nu
  */
 export type LevelLayout = 'tree' | 'stack'
 
+/**
+ * Куда прижимать уровень в раскладке `'stack'`:
+ *  - `'start'` (по умолчанию) — к началу полосы, все уровни начинаются с одной черты;
+ *  - `'center'` — по центру самого населённого уровня.
+ */
+export type LevelAlign = 'start' | 'center'
+
 /** Настройки раскладки. Все размеры — в пикселях. */
 export interface TreeViewOptions<T = any> {
   /** Ширина карточки узла. */
@@ -55,6 +62,8 @@ export interface TreeViewOptions<T = any> {
   linkStyle: LinkStyle
   /** Как расставлять узлы поперёк уровня. По умолчанию — `'tree'`. */
   levelLayout?: LevelLayout
+  /** Куда прижимать уровень при `levelLayout: 'stack'`. По умолчанию — `'start'`. */
+  levelAlign?: LevelAlign
 }
 
 /**

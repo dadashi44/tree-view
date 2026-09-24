@@ -9,6 +9,7 @@ export const DEFAULT_OPTIONS: TreeViewOptions = {
   direction: 'top-to-bottom',
   linkStyle: 'elbow',
   levelLayout: 'tree',
+  levelAlign: 'start',
 }
 
 /**

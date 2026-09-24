@@ -82,14 +82,17 @@ function placeLevels(
 }
 
 /**
- * Раскладка «уровнями»: каждый уровень укладывается сам по себе, узел за узлом,
- * и целиком центруется относительно самого населённого уровня. Родитель больше
- * не садится по центру детей — зато высота уровня зависит только от того,
- * сколько на нём узлов и какой у них отступ.
+ * Раскладка «уровнями»: каждый уровень укладывается сам по себе, узел за узлом.
+ * Родитель больше не садится по центру детей — зато высота уровня зависит
+ * только от того, сколько на нём узлов и какой у них отступ.
  *
  * Пригождается, когда уровни показывают по одному: в свайпере турнирной сетки
  * раунд из восьми матчей и полуфинал из двух получают каждый свой отступ,
- * а не тот, что достался от соседнего уровня, и оба стоят по центру экрана.
+ * а не тот, что достался от соседнего уровня.
+ *
+ * По умолчанию уровни начинаются с одной черты — так при свайпе матчи каждого
+ * раунда оказываются сверху, а не уезжают к середине экрана. `levelAlign:
+ * 'center'` центрует их относительно самого населённого уровня.
  */
 function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Placements {
   const vertical = options.direction === 'top-to-bottom' || options.direction === 'bottom-to-top'
@@ -130,12 +133,14 @@ function stackNodes<T>(roots: TreeNode<T>[], options: TreeViewOptions<T>): Place
   })
 
   // Второй проход по уровням: короткие сдвигаются к центру самого длинного.
-  const widest = Math.max(0, ...extents)
+  if (options.levelAlign === 'center') {
+    const widest = Math.max(0, ...extents)
 
-  byLevel.forEach((placements, depth) => {
-    const shift = (widest - (extents[depth] ?? 0)) / 2
-    if (shift > 0) for (const placement of placements) placement.across += shift
-  })
+    byLevel.forEach((placements, depth) => {
+      const shift = (widest - (extents[depth] ?? 0)) / 2
+      if (shift > 0) for (const placement of placements) placement.across += shift
+    })
+  }
 
   return { byId, ...placeLevels(order, levelSizes, options.levelGap) }
 }
