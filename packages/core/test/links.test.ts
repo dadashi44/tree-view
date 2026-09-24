@@ -111,26 +111,77 @@ describe('elbowOffset', () => {
 
   it('с ним колено стоит вплотную к ребёнку', () => {
     // Ребёнок слева, родитель справа: колено на 20 правее ребёнка.
-    expect(buildPath(from, to, 'elbow', 'right-to-left', 20)).toBe(
+    expect(buildPath(from, to, 'elbow', 'right-to-left', { elbowOffset: 20 })).toBe(
       'M 300 50 L 120 50 L 120 10 L 100 10',
     )
   })
 
   it('дальше родителя колено не уходит', () => {
-    expect(buildPath(from, to, 'elbow', 'right-to-left', 9999)).toBe(
+    expect(buildPath(from, to, 'elbow', 'right-to-left', { elbowOffset: 9999 })).toBe(
       'M 300 50 L 300 50 L 300 10 L 100 10',
     )
   })
 
   it('в вертикальном дереве работает так же', () => {
-    expect(buildPath({ x: 50, y: 0 }, { x: 10, y: 200 }, 'elbow', 'top-to-bottom', 20)).toBe(
+    expect(buildPath({ x: 50, y: 0 }, { x: 10, y: 200 }, 'elbow', 'top-to-bottom', { elbowOffset: 20 })).toBe(
       'M 50 0 L 50 180 L 10 180 L 10 200',
     )
   })
 
   it('кривую не трогает', () => {
-    expect(buildPath(from, to, 'curve', 'right-to-left', 20)).toBe(
+    expect(buildPath(from, to, 'curve', 'right-to-left', { elbowOffset: 20 })).toBe(
       buildPath(from, to, 'curve', 'right-to-left'),
     )
+  })
+})
+
+describe('linkStyle: bracket', () => {
+  // Родитель справа на y=50, ребёнок слева на y=10, дети группы сходятся на y=30.
+  const from = { x: 300, y: 50 }
+  const to = { x: 100, y: 10 }
+
+  it('ведёт от середины группы к родителю', () => {
+    expect(
+      buildPath(from, to, 'bracket', 'right-to-left', { elbowOffset: 20, groupMid: 30 }),
+    ).toBe('M 300 50 L 300 30 L 120 30 L 120 10 L 100 10')
+  })
+
+  it('родитель по центру детей — скобка совпадает со «ступенькой»', () => {
+    const centered = { x: 300, y: 30 }
+
+    expect(buildPath(centered, to, 'bracket', 'right-to-left', { groupMid: 30 })).toBe(
+      'M 300 30 L 300 30 L 200 30 L 200 10 L 100 10',
+    )
+  })
+
+  it('без середины группы ведёт себя как «ступенька»', () => {
+    expect(buildPath(from, to, 'bracket', 'right-to-left', { elbowOffset: 20 })).toBe(
+      'M 300 50 L 300 50 L 120 50 L 120 10 L 100 10',
+    )
+  })
+
+  it('в вертикальном дереве оси меняются местами', () => {
+    expect(
+      buildPath({ x: 50, y: 0 }, { x: 10, y: 200 }, 'bracket', 'top-to-bottom', {
+        elbowOffset: 20,
+        groupMid: 30,
+      }),
+    ).toBe('M 50 0 L 30 0 L 30 180 L 10 180 L 10 200')
+  })
+})
+
+describe('buildLinks со скобкой', () => {
+  it('считает середину группы по крайним детям', () => {
+    const parent = { id: 'p', parentId: null, x: 300, y: 50, width: 100, height: 20 }
+    const kids = [
+      { id: 'a', parentId: 'p', x: 100, y: 0, width: 100, height: 20 },
+      { id: 'b', parentId: 'p', x: 100, y: 100, width: 100, height: 20 },
+    ]
+    const nodes = [parent, ...kids].map((node) => ({ ...node, data: {}, depth: 0, hasChildren: false, collapsed: false })) as never
+
+    const links = buildLinks(nodes, resolveOptions({ direction: 'right-to-left', linkStyle: 'bracket' }))
+
+    // Центры детей 10 и 110 — середина 60, обе линии идут через неё.
+    expect(links.every((link) => link.path.includes(' 60 '))).toBe(true)
   })
 })

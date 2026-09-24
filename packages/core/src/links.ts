@@ -36,20 +36,32 @@ export function getAnchors<T>(
   }
 }
 
+/** Что ещё нужно знать линии, кроме своих концов. */
+export interface PathOptions {
+  /**
+   * На каком расстоянии от ребёнка проходит колено. Тогда линии двух детей
+   * сходятся сразу за их карточками и читаются как скобка на пару, а не как
+   * два длинных хвоста. Не задано — колено ровно посередине.
+   */
+  elbowOffset?: number
+  /**
+   * Где сходятся дети одного родителя — координата поперёк уровня.
+   * Нужна стилю `'bracket'`; без неё он ведёт себя как `'elbow'`.
+   */
+  groupMid?: number
+}
+
 /**
- * Строит атрибут `d` для `<path>`: прямая, «ступенька» или кривая Безье.
- *
- * `elbowOffset` сдвигает колено «ступеньки» ближе к ребёнку: тогда линии двух
- * детей сходятся сразу за их карточками и читаются как скобка на пару,
- * а не как два длинных хвоста. Не задан — колено ровно посередине.
+ * Строит атрибут `d` для `<path>`: прямая, «ступенька», скобка или кривая Безье.
  */
 export function buildPath(
   from: Point,
   to: Point,
   style: LinkStyle,
   direction: Direction,
-  elbowOffset?: number,
+  options: PathOptions = {},
 ): string {
+  const { elbowOffset, groupMid } = options
   const x1 = round(from.x)
   const y1 = round(from.y)
   const x2 = round(to.x)
@@ -64,21 +76,35 @@ export function buildPath(
   const midX = round((x1 + x2) / 2)
   const midY = round((y1 + y2) / 2)
 
-  if (style === 'elbow') {
-    // Колено: посередине или на заданном расстоянии от ребёнка,
-    // но не дальше самого родителя.
-    const corner = (child: number, parent: number, middle: number) => {
-      if (elbowOffset == null) return middle
-      const span = Math.abs(parent - child)
-      return round(child + Math.sign(parent - child) * Math.min(elbowOffset, span))
+  // Колено: посередине или на заданном расстоянии от ребёнка,
+  // но не дальше самого родителя.
+  const cornerOf = (child: number, parent: number, middle: number) => {
+    if (elbowOffset == null) return middle
+    const span = Math.abs(parent - child)
+    return round(child + Math.sign(parent - child) * Math.min(elbowOffset, span))
+  }
+
+  if (style === 'bracket') {
+    // Дети сходятся в одну вертикаль на `mid`, и уже от неё линия идёт
+    // к родителю — вдоль его края, если он стоит не по центру детей.
+    if (vertical) {
+      const corner = cornerOf(y2, y1, midY)
+      const mid = round(groupMid ?? x1)
+      return `M ${x1} ${y1} L ${mid} ${y1} L ${mid} ${corner} L ${x2} ${corner} L ${x2} ${y2}`
     }
 
+    const corner = cornerOf(x2, x1, midX)
+    const mid = round(groupMid ?? y1)
+    return `M ${x1} ${y1} L ${x1} ${mid} L ${corner} ${mid} L ${corner} ${y2} L ${x2} ${y2}`
+  }
+
+  if (style === 'elbow') {
     if (vertical) {
-      const cornerY = corner(y2, y1, midY)
+      const cornerY = cornerOf(y2, y1, midY)
       return `M ${x1} ${y1} L ${x1} ${cornerY} L ${x2} ${cornerY} L ${x2} ${y2}`
     }
 
-    const cornerX = corner(x2, x1, midX)
+    const cornerX = cornerOf(x2, x1, midX)
     return `M ${x1} ${y1} L ${cornerX} ${y1} L ${cornerX} ${y2} L ${x2} ${y2}`
   }
 
@@ -87,10 +113,37 @@ export function buildPath(
     : `M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}`
 }
 
+/**
+ * Середина группы детей поперёк уровня: там сходится «скобка».
+ * Считается по крайним детям, как и положение родителя в обычной раскладке.
+ */
+function groupMiddles<T>(nodes: LayoutNode<T>[], vertical: boolean): Map<string, number> {
+  const spans = new Map<string, { min: number; max: number }>()
+
+  for (const node of nodes) {
+    if (node.parentId == null) continue
+
+    const center = vertical ? node.x + node.width / 2 : node.y + node.height / 2
+    const span = spans.get(node.parentId)
+
+    if (!span) spans.set(node.parentId, { min: center, max: center })
+    else {
+      span.min = Math.min(span.min, center)
+      span.max = Math.max(span.max, center)
+    }
+  }
+
+  return new Map([...spans].map(([id, span]) => [id, (span.min + span.max) / 2]))
+}
+
 /** Для каждого узла с родителем создаёт линию «родитель → ребёнок». */
 export function buildLinks<T>(nodes: LayoutNode<T>[], options: TreeViewOptions): LayoutLink<T>[] {
   const byId = new Map(nodes.map((node) => [node.id, node]))
   const links: LayoutLink<T>[] = []
+  const middles =
+    options.linkStyle === 'bracket'
+      ? groupMiddles(nodes, isVertical(options.direction))
+      : undefined
 
   for (const node of nodes) {
     const parent = node.parentId == null ? undefined : byId.get(node.parentId)
@@ -101,7 +154,10 @@ export function buildLinks<T>(nodes: LayoutNode<T>[], options: TreeViewOptions):
       id: `${parent.id}->${node.id}`,
       source: parent,
       target: node,
-      path: buildPath(from, to, options.linkStyle, options.direction, options.elbowOffset),
+      path: buildPath(from, to, options.linkStyle, options.direction, {
+        elbowOffset: options.elbowOffset,
+        groupMid: middles?.get(parent.id),
+      }),
     })
   }
 
