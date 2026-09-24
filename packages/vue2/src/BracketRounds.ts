@@ -107,7 +107,10 @@ export default Vue.extend({
      *
      * Раунды растягиваются на ширину экрана, а уровни укладываются каждый сам по
      * себе: в дереве место второго раунда выводится из первого, поэтому отдельно
-     * его отступ не задать. Сам отступ зависит от того, сколько матчей в раунде.
+     * его отступ не задать.
+     *
+     * Внутри пары матчи стоят тесно, а между парами промежуток крупнее — иначе
+     * весь раунд читается как один список и непонятно, кто с кем сходится дальше.
      */
     gridOptions(): Partial<TreeViewOptions> {
       if (!this.isSwipe) return { ...this.options }
@@ -118,7 +121,8 @@ export default Vue.extend({
         ...this.options,
         levelGap: this.levelGap,
         levelLayout: 'stack',
-        siblingGap: (_node: TreeNode<unknown>, count: number) => roundSiblingGap(count, base),
+        siblingGap: base,
+        groupGap: (_node: TreeNode<unknown>, count: number) => roundSiblingGap(count, base),
       }
     },
   },

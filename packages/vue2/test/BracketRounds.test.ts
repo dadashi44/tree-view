@@ -111,9 +111,10 @@ describe('BracketRounds (Vue 2)', () => {
 
       // Ширина карточки не меняется — иначе разъехалась бы вёрстка матчей.
       expect(got).toMatchObject({ ...rest, levelGap: 179, levelLayout: 'stack' })
-      // Отступ зависит от того, сколько матчей в раунде: в первом их больше.
-      expect((got.siblingGap as (n: unknown, c: number) => number)(null, 4)).toBe(32)
-      expect((got.siblingGap as (n: unknown, c: number) => number)(null, 2)).toBe(16)
+      // Внутри пары тесно, между парами — по числу матчей в раунде.
+      expect(got.siblingGap).toBe(8)
+      expect((got.groupGap as (n: unknown, c: number) => number)(null, 4)).toBe(32)
+      expect((got.groupGap as (n: unknown, c: number) => number)(null, 2)).toBe(16)
     })
 
     it('полоса не показана — свайпера нет', async () => {

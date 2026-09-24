@@ -123,7 +123,10 @@ const mirrored = computed(
  *
  * Раунды растягиваются на ширину экрана, а уровни укладываются каждый сам по
  * себе: в дереве место второго раунда выводится из первого, поэтому отдельно
- * его отступ не задать. Сам отступ зависит от того, сколько матчей в раунде.
+ * его отступ не задать.
+ *
+ * Внутри пары матчи стоят тесно, а между парами промежуток крупнее — иначе
+ * весь раунд читается как один список и непонятно, кто с кем сходится дальше.
  */
 const gridOptions = computed<Partial<TreeViewOptions>>(() =>
   isSwipe.value
@@ -131,7 +134,8 @@ const gridOptions = computed<Partial<TreeViewOptions>>(() =>
         ...props.options,
         levelGap: levelGap.value,
         levelLayout: 'stack',
-        siblingGap: (_node: TreeNode<unknown>, count: number) =>
+        siblingGap: props.swipeSiblingGap,
+        groupGap: (_node: TreeNode<unknown>, count: number) =>
           roundSiblingGap(count, props.swipeSiblingGap),
       }
     : { ...props.options },
