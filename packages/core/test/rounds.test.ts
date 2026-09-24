@@ -95,15 +95,16 @@ describe('levelGapForWidth', () => {
 })
 
 describe('roundAtScroll', () => {
-  it('считает раунд по прокрутке', () => {
+  it('стоим на раунде, пока не тронули полосу', () => {
     expect(roundAtScroll(0, 390, 3)).toBe(0)
     expect(roundAtScroll(390, 390, 3)).toBe(1)
     expect(roundAtScroll(780, 390, 3)).toBe(2)
   })
 
-  it('на полпути свайпа переключается на следующий', () => {
-    expect(roundAtScroll(194, 390, 3)).toBe(0)
-    expect(roundAtScroll(196, 390, 3)).toBe(1)
+  it('сдвинулись — предыдущий раунд сразу считается пройденным', () => {
+    expect(roundAtScroll(1, 390, 3)).toBe(1)
+    expect(roundAtScroll(194, 390, 3)).toBe(1)
+    expect(roundAtScroll(391, 390, 3)).toBe(2)
   })
 
   it('дальше последнего раунда не уходит', () => {

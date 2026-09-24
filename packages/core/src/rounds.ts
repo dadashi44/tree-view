@@ -103,11 +103,21 @@ export function levelGapForWidth(width: number, nodeWidth: number): number {
   return Math.max(0, width - nodeWidth)
 }
 
-/** Раунд, на котором сейчас стоит прокрутка. */
+/**
+ * Раунд, к которому относится прокрутка.
+ *
+ * Считаем «вверх»: стоит полосе сдвинуться с раунда, как текущим становится
+ * следующий. Предыдущий раунд уходит сразу, в начале движения, а не на полпути —
+ * иначе он половину свайпа висит на экране поверх приезжающего.
+ */
 export function roundAtScroll(scrollLeft: number, columnWidth: number, count: number): number {
   if (columnWidth <= 0 || count <= 0) return 0
 
-  return clamp(Math.round(scrollLeft / columnWidth), 0, count - 1)
+  // Мелкая поправка: прокрутка бывает дробной, и ровно на границе
+  // без неё мы бы уже перескакивали на следующий раунд.
+  const passed = Math.ceil(scrollLeft / columnWidth - 0.001)
+
+  return clamp(passed, 0, count - 1)
 }
 
 /**

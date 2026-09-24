@@ -183,6 +183,28 @@ describe('BracketRounds', () => {
       expect(wrapper.emitted('round')![0]).toEqual([1])
     })
 
+    it('раунд уходит сразу, как только полосу тронули', async () => {
+      const wrapper = mount(BracketRounds, {
+        props: { ...props, swipe: true },
+        slots: {
+          default:
+            '<div class="tree-view__node" data-depth="2"></div>' +
+            '<div class="tree-view__node" data-depth="1"></div>',
+        },
+        attachTo: document.body,
+      })
+      await nextTick()
+
+      const root = wrapper.element as HTMLElement
+      // Сдвинулись всего на 20 из 390 — первый раунд уже считается пройденным.
+      Object.defineProperty(root, 'scrollLeft', { value: 20, configurable: true })
+      await wrapper.trigger('scroll')
+      await nextTick()
+
+      expect(wrapper.findAll('.tv-hidden').map((n) => n.attributes('data-depth'))).toEqual(['2'])
+      expect(wrapper.emitted('round')![0]).toEqual([1])
+    })
+
     it('hide-passed отключает скрытие', async () => {
       const wrapper = mount(BracketRounds, {
         props: { ...props, swipe: true, hidePassed: false },
