@@ -188,6 +188,43 @@
   background: var(--tv-bracket-loser-bg);
 }
 
+/* Кнопка «свернуть предыдущие матчи»: висит на краю карточки, с той стороны,
+   откуда приходят линии от детей. Кружок нарочно маленький — карточка узкая. */
+.tv-bracket__toggle {
+  position: absolute;
+  top: 50%;
+  left: -11px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--tv-bracket-winner-bg);
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 18%);
+  transform: translateY(-50%);
+}
+
+.tv-bracket__toggle:hover {
+  border-color: var(--tv-bracket-winner-bg);
+}
+
+/* Свёрнутый матч виден сразу: кнопка залита, а не пустая. */
+.tv-bracket__toggle--collapsed {
+  color: var(--tv-bracket-winner-color);
+  background: var(--tv-bracket-winner-bg);
+  border-color: var(--tv-bracket-winner-bg);
+}
+
 .tv-bracket__name {
   max-width: 120px;
   overflow: hidden;
