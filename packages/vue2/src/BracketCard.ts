@@ -123,7 +123,16 @@ export default Vue.extend({
 
     if (this.hasChildren) children.push(this.renderToggle(h))
 
-    for (const row of card.rows) children.push(this.renderRow(h, row))
+    // Строки лежат в своей обёртке: она держит скругление и контур, поэтому
+    // матч читается как один блок, а не как список из четырёх команд.
+    // Подсказка и кнопка остаются снаружи — их обрезать нельзя.
+    children.push(
+      h(
+        'div',
+        { class: 'tv-bracket__rows' },
+        card.rows.map((row) => this.renderRow(h, row)),
+      ),
+    )
 
     return h('div', { class: ['tv-bracket', { 'tv-bracket--my-team': card.hasMyTeam }] }, children)
   },

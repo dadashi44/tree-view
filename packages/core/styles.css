@@ -116,6 +116,9 @@
   --tv-bracket-my-bg: #00146c;
   --tv-bracket-my-color: #ffffff;
   --tv-bracket-radius: 6px;
+  --tv-bracket-shadow:
+    0 0 0 1px rgb(15 23 42 / 8%),
+    0 1px 3px rgb(15 23 42 / 10%);
 
   position: relative;
   box-sizing: border-box;
@@ -129,8 +132,21 @@
   font-size: 12px;
 }
 
-.tv-bracket--my-team {
+/* Матч — один блок с собственным контуром: два соседних матча иначе
+   читаются как один список из четырёх команд. Обрезка по скруглению живёт
+   здесь, а не на карточке, — подсказку и кнопку сворачивания обрезать нельзя. */
+.tv-bracket__rows {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   border-radius: var(--tv-bracket-radius);
+  box-shadow: var(--tv-bracket-shadow);
+}
+
+.tv-bracket--my-team .tv-bracket__rows {
   outline: 2px solid var(--tv-bracket-my-bg);
 }
 

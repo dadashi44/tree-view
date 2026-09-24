@@ -85,29 +85,34 @@ function onRowClick(row: BracketCardRow): void {
       {{ collapsed ? '+' : '−' }}
     </button>
 
-    <div
-      v-for="row in card.rows"
-      :key="row.key"
-      class="tv-bracket__row"
-      :class="{
-        'tv-bracket__row--winner': row.isWinner,
-        'tv-bracket__row--loser': row.isLoser && !row.isEmpty,
-        'tv-bracket__row--my': row.isMyTeam,
-        'tv-bracket__row--empty': row.isEmpty,
-      }"
-      :title="row.isMyTeam ? 'Моя команда' : undefined"
-      @click="onRowClick(row)"
-      @mouseenter="hoveredKey = row.key"
-      @mouseleave="hoveredKey = null"
-    >
-      <template v-if="row.team">
-        <span v-if="row.isTechDefeat && hoveredKey === row.key" class="tv-bracket__tooltip">
-          {{ techDefeatHint }}
-        </span>
+    <!-- Строки лежат в своей обёртке: она держит скругление и контур, поэтому
+         матч читается как один блок, а не как список из четырёх команд.
+         Подсказка и кнопка остаются снаружи — их обрезать нельзя. -->
+    <div class="tv-bracket__rows">
+      <div
+        v-for="row in card.rows"
+        :key="row.key"
+        class="tv-bracket__row"
+        :class="{
+          'tv-bracket__row--winner': row.isWinner,
+          'tv-bracket__row--loser': row.isLoser && !row.isEmpty,
+          'tv-bracket__row--my': row.isMyTeam,
+          'tv-bracket__row--empty': row.isEmpty,
+        }"
+        :title="row.isMyTeam ? 'Моя команда' : undefined"
+        @click="onRowClick(row)"
+        @mouseenter="hoveredKey = row.key"
+        @mouseleave="hoveredKey = null"
+      >
+        <template v-if="row.team">
+          <span v-if="row.isTechDefeat && hoveredKey === row.key" class="tv-bracket__tooltip">
+            {{ techDefeatHint }}
+          </span>
 
-        <span class="tv-bracket__name">{{ row.team.name }}</span>
-        <span class="tv-bracket__score">{{ row.score }}</span>
-      </template>
+          <span class="tv-bracket__name">{{ row.team.name }}</span>
+          <span class="tv-bracket__score">{{ row.score }}</span>
+        </template>
+      </div>
     </div>
   </div>
 </template>
