@@ -36,8 +36,20 @@ export function getAnchors<T>(
   }
 }
 
-/** Строит атрибут `d` для `<path>`: прямая, «ступенька» или кривая Безье. */
-export function buildPath(from: Point, to: Point, style: LinkStyle, direction: Direction): string {
+/**
+ * Строит атрибут `d` для `<path>`: прямая, «ступенька» или кривая Безье.
+ *
+ * `elbowOffset` сдвигает колено «ступеньки» ближе к ребёнку: тогда линии двух
+ * детей сходятся сразу за их карточками и читаются как скобка на пару,
+ * а не как два длинных хвоста. Не задан — колено ровно посередине.
+ */
+export function buildPath(
+  from: Point,
+  to: Point,
+  style: LinkStyle,
+  direction: Direction,
+  elbowOffset?: number,
+): string {
   const x1 = round(from.x)
   const y1 = round(from.y)
   const x2 = round(to.x)
@@ -53,9 +65,21 @@ export function buildPath(from: Point, to: Point, style: LinkStyle, direction: D
   const midY = round((y1 + y2) / 2)
 
   if (style === 'elbow') {
-    return vertical
-      ? `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`
-      : `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`
+    // Колено: посередине или на заданном расстоянии от ребёнка,
+    // но не дальше самого родителя.
+    const corner = (child: number, parent: number, middle: number) => {
+      if (elbowOffset == null) return middle
+      const span = Math.abs(parent - child)
+      return round(child + Math.sign(parent - child) * Math.min(elbowOffset, span))
+    }
+
+    if (vertical) {
+      const cornerY = corner(y2, y1, midY)
+      return `M ${x1} ${y1} L ${x1} ${cornerY} L ${x2} ${cornerY} L ${x2} ${y2}`
+    }
+
+    const cornerX = corner(x2, x1, midX)
+    return `M ${x1} ${y1} L ${cornerX} ${y1} L ${cornerX} ${y2} L ${x2} ${y2}`
   }
 
   return vertical
@@ -77,7 +101,7 @@ export function buildLinks<T>(nodes: LayoutNode<T>[], options: TreeViewOptions):
       id: `${parent.id}->${node.id}`,
       source: parent,
       target: node,
-      path: buildPath(from, to, options.linkStyle, options.direction),
+      path: buildPath(from, to, options.linkStyle, options.direction, options.elbowOffset),
     })
   }
 

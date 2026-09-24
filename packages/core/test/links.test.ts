@@ -98,3 +98,39 @@ describe('buildLinks', () => {
     expect(buildLinks([source], resolveOptions())).toEqual([])
   })
 })
+
+describe('elbowOffset', () => {
+  const from = { x: 300, y: 50 }
+  const to = { x: 100, y: 10 }
+
+  it('без него колено ровно посередине', () => {
+    expect(buildPath(from, to, 'elbow', 'right-to-left')).toBe(
+      'M 300 50 L 200 50 L 200 10 L 100 10',
+    )
+  })
+
+  it('с ним колено стоит вплотную к ребёнку', () => {
+    // Ребёнок слева, родитель справа: колено на 20 правее ребёнка.
+    expect(buildPath(from, to, 'elbow', 'right-to-left', 20)).toBe(
+      'M 300 50 L 120 50 L 120 10 L 100 10',
+    )
+  })
+
+  it('дальше родителя колено не уходит', () => {
+    expect(buildPath(from, to, 'elbow', 'right-to-left', 9999)).toBe(
+      'M 300 50 L 300 50 L 300 10 L 100 10',
+    )
+  })
+
+  it('в вертикальном дереве работает так же', () => {
+    expect(buildPath({ x: 50, y: 0 }, { x: 10, y: 200 }, 'elbow', 'top-to-bottom', 20)).toBe(
+      'M 50 0 L 50 180 L 10 180 L 10 200',
+    )
+  })
+
+  it('кривую не трогает', () => {
+    expect(buildPath(from, to, 'curve', 'right-to-left', 20)).toBe(
+      buildPath(from, to, 'curve', 'right-to-left'),
+    )
+  })
+})

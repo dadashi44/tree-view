@@ -20,6 +20,7 @@ export {
   levelGapForWidth,
   roundSiblingGap,
   MAX_GAP_STEPS,
+  SWIPE_ELBOW_OFFSET,
   roundAtScroll,
   roundOfDepth,
   roundScrollLeft,

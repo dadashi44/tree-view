@@ -134,3 +134,12 @@ export const MAX_GAP_STEPS = 4
 export function roundSiblingGap(count: number, base: number): number {
   return base * clamp(count, 1, MAX_GAP_STEPS)
 }
+
+/**
+ * На каком расстоянии от карточки сходятся линии пары в свайпере.
+ *
+ * Промежуток между раундами там во весь экран, и колено «ступеньки» посередине
+ * уезжало бы далеко вправо: вместо скобки на пару у каждого матча получался бы
+ * свой длинный хвост.
+ */
+export const SWIPE_ELBOW_OFFSET = 20
