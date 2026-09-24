@@ -72,3 +72,34 @@ describe('BracketCard (Vue 2)', () => {
     expect(wrapper.emitted('select')).toBeUndefined()
   })
 })
+
+describe('BracketCard (Vue 2): сворачивание предыдущих матчей', () => {
+  it('без детей кнопки нет', () => {
+    const wrapper = mount(BracketCard, { propsData: { match } })
+
+    expect(wrapper.find('.tv-bracket__toggle').exists()).toBe(false)
+  })
+
+  it('с детьми показывает кнопку и отдаёт нажатие наружу', async () => {
+    const wrapper = mount(BracketCard, { propsData: { match, hasChildren: true } })
+    const toggle = wrapper.find('.tv-bracket__toggle')
+
+    expect(toggle.text()).toBe('−')
+
+    await toggle.trigger('click')
+
+    expect(wrapper.emitted('toggle')).toHaveLength(1)
+    expect(wrapper.emitted('select')).toBeUndefined()
+  })
+
+  it('свёрнутый матч виден по кнопке', () => {
+    const wrapper = mount(BracketCard, {
+      propsData: { match, hasChildren: true, collapsed: true },
+    })
+
+    expect(wrapper.find('.tv-bracket__toggle').text()).toBe('+')
+    expect(wrapper.find('.tv-bracket__toggle').classes()).toContain(
+      'tv-bracket__toggle--collapsed',
+    )
+  })
+})

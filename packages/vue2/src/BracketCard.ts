@@ -22,6 +22,13 @@ export default Vue.extend({
     techDefeatLabel: { type: String, default: 'ТП' },
     /** Подсказка по наведению на техническое поражение. */
     techDefeatHint: { type: String, default: 'Техническое поражение' },
+    /** У матча есть предыдущие — рисуем кнопку, которая их сворачивает. */
+    hasChildren: { type: Boolean, default: false },
+    /** Предыдущие матчи сейчас свёрнуты. */
+    collapsed: { type: Boolean, default: false },
+    /** Подписи кнопки для screen reader. */
+    collapseHint: { type: String, default: 'Свернуть предыдущие матчи' },
+    expandHint: { type: String, default: 'Показать предыдущие матчи' },
   },
 
   data() {
@@ -35,6 +42,35 @@ export default Vue.extend({
   },
 
   methods: {
+    /**
+     * Кнопка стоит со стороны предыдущих матчей — туда же уходят линии.
+     * data-tv-no-pan: нажатие не должно утаскивать холст.
+     */
+    renderToggle(h: typeof Vue.prototype.$createElement): VNode {
+      const hint = this.collapsed ? this.expandHint : this.collapseHint
+
+      return h(
+        'button',
+        {
+          class: ['tv-bracket__toggle', { 'tv-bracket__toggle--collapsed': this.collapsed }],
+          attrs: {
+            type: 'button',
+            title: hint,
+            'aria-label': hint,
+            'aria-expanded': String(!this.collapsed),
+            'data-tv-no-pan': '',
+          },
+          on: {
+            click: (event: MouseEvent) => {
+              event.stopPropagation()
+              this.$emit('toggle')
+            },
+          },
+        },
+        this.collapsed ? '+' : '−',
+      )
+    },
+
     renderRow(h: typeof Vue.prototype.$createElement, row: BracketCardRow): VNode {
       const content: VNode[] = []
 
@@ -84,6 +120,8 @@ export default Vue.extend({
     if (card.hasMyTeam && this.myTeamHint) {
       children.push(h('div', { class: 'tv-bracket__hint' }, this.myTeamHint))
     }
+
+    if (this.hasChildren) children.push(this.renderToggle(h))
 
     for (const row of card.rows) children.push(this.renderRow(h, row))
 
