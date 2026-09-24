@@ -74,7 +74,7 @@ watch(
         @select="(round) => console.log('Клик по раунду', round.name)"
       >
         <!-- options из слота подогнаны под экран: на мобильном это свайпер. -->
-        <template #default="{ options: gridOptions }">
+        <template #default="{ options: gridOptions, isSwipe }">
           <TreeView
             ref="tree"
             :data="data"
@@ -87,12 +87,17 @@ watch(
             :fit-on-mount="interactive"
             :style="interactive ? { height: '520px' } : undefined"
           >
-            <template #node="{ data: match }">
-              <!-- Карточка из пакета: та же вёрстка, что в админке и на клиенте. -->
+            <template #node="{ data: match, hasChildren, collapsed, toggle }">
+              <!-- Карточка из пакета: та же вёрстка, что в админке и на клиенте.
+                   Сворачивать предыдущие матчи даём только в свайпере: на широком
+                   экране вся сетка и так перед глазами. -->
               <BracketCard
                 :match="match as BracketMatch"
                 :rows="rowsOf(match as BracketMatch)"
+                :has-children="isSwipe && hasChildren"
+                :collapsed="collapsed"
                 @select="emit('select', match as BracketMatch, $event as BracketTeam)"
+                @toggle="toggle"
               />
             </template>
           </TreeView>
