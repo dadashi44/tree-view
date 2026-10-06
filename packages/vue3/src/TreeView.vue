@@ -3,12 +3,10 @@
  * Компонент-обёртка. Вся математика — в пакете core, здесь только
  * реактивность, разметка и события.
  */
-import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import {
   DEFAULT_OVERSCAN,
   DEFAULT_SCALE_LIMITS,
-  resolveOptions,
-  roundContentHeight,
   toCssTransform,
   visibleLayout,
   type Accessors,
@@ -17,7 +15,6 @@ import {
   type Transform,
   type TreeViewOptions,
 } from '@bigplay/tree-view-core'
-import { ACTIVE_ROUND } from './activeRound'
 import TreeNodeCard from './TreeNodeCard.vue'
 import { usePanZoom } from './usePanZoom'
 import { useTreeLayout } from './useTreeLayout'
@@ -118,39 +115,9 @@ const drawn = computed(() =>
   props.virtualize ? visibleLayout(layout.value, visible.rect.value, props.overscan) : layout.value,
 )
 
-/**
- * Раунд, который виден в свайпере, — его кладёт BracketRounds, если сетка
- * стоит внутри него. Стоит сама по себе — тут `null`, и всё как раньше.
- */
-const activeRound = inject(ACTIVE_ROUND, ref<number | null>(null))
-
-const mirrored = computed(() => {
-  const direction = resolveOptions(props.options).direction
-  return direction === 'right-to-left' || direction === 'bottom-to-top'
-})
-
-/**
- * Высота холста.
- *
- * Обычно — по всей раскладке. В свайпере виден один раунд, и высота берётся
- * по нему: иначе финал с одной ячейкой держит высоту самого населённого
- * раунда и под ним остаётся пустота.
- */
-const canvasHeight = computed(() => {
-  const round = activeRound.value
-  if (round === null) return layout.value.height
-
-  const rounds = layout.value.nodes.reduce((max, node) => Math.max(max, node.depth), 0) + 1
-  const height = roundContentHeight(layout.value.nodes, round, rounds, mirrored.value)
-
-  // Раунда с таким номером в раскладке нет (данные ещё не доехали) —
-  // держим прежнюю высоту, чтобы сетка не прыгнула в ноль.
-  return height || layout.value.height
-})
-
 const canvasStyle = computed(() => ({
   width: `${layout.value.width}px`,
-  height: `${canvasHeight.value}px`,
+  height: `${layout.value.height}px`,
   transform: toCssTransform(panZoom.transform.value),
 }))
 
@@ -160,7 +127,7 @@ const rootStyle = computed(() => {
   const { scale } = panZoom.transform.value
   return {
     width: `${layout.value.width * scale}px`,
-    height: `${canvasHeight.value * scale}px`,
+    height: `${layout.value.height * scale}px`,
     overflow: 'visible',
   }
 })

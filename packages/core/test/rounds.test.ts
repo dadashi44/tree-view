@@ -1,10 +1,8 @@
-import type { LayoutNode } from '../src/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildBracketRounds,
   levelGapForWidth,
   roundAtScroll,
-  roundContentHeight,
   roundOfDepth,
   roundSiblingGap,
   roundScrollLeft,
@@ -142,39 +140,5 @@ describe('roundSiblingGap', () => {
 
   it('пустой раунд получает базовый отступ', () => {
     expect(roundSiblingGap(0, 12)).toBe(12)
-  })
-})
-
-describe('roundContentHeight', () => {
-  /** Узел раскладки: функции нужны только глубина и вертикаль. */
-  function node(id: string, depth: number, y: number, height: number): LayoutNode<unknown> {
-    return {
-      id,
-      data: null,
-      depth,
-      parentId: null,
-      x: 0,
-      y,
-      width: 211,
-      height,
-      hasChildren: false,
-      collapsed: false,
-    }
-  }
-
-  /** Бракет: финал на глубине 0, два полуфинала — на глубине 1. */
-  const nodes = [node('final', 0, 0, 50), node('sf-1', 1, 0, 50), node('sf-2', 1, 70, 50)]
-
-  it('считает по самой нижней карточке раунда', () => {
-    // Сетка справа налево: глубина 1 — это первый раунд.
-    expect(roundContentHeight(nodes, 0, 2, true)).toBe(120)
-  })
-
-  it('у финала высота одной карточки, а не всего бракета', () => {
-    expect(roundContentHeight(nodes, 1, 2, true)).toBe(50)
-  })
-
-  it('раунда нет в раскладке — ноль, высоту решает вызывающий', () => {
-    expect(roundContentHeight(nodes, 5, 2, true)).toBe(0)
   })
 })

@@ -24,17 +24,6 @@ function node(left: number): string {
   return `<div class="tree-view__node" data-left="${left}"></div>`
 }
 
-/**
- * Свайп: прокручивается внутренний блок с сеткой, а не сам компонент —
- * полоса раундов лежит отдельным прилипающим слоем.
- */
-async function swipeTo(wrapper: ReturnType<typeof mount>, scrollLeft: number): Promise<void> {
-  const scroller = wrapper.find('.tv-rounds__scroll')
-  Object.defineProperty(scroller.element, 'scrollLeft', { value: scrollLeft, configurable: true })
-  await scroller.trigger('scroll')
-  await nextTick()
-}
-
 /** Блок с горизонтальной прокруткой: размеры задаются руками. */
 function scrollable(width = 390): HTMLElement {
   const element = document.createElement('div')
@@ -133,7 +122,7 @@ describe('BracketRounds', () => {
       expect(wrapper.find('.tv-rounds__content').attributes('style')).toContain('padding-left: 89.5px')
     })
 
-    it('листается блок с сеткой, а полоса — отдельный прилипающий слой', () => {
+    it('полоса сама становится прокручиваемой', () => {
       const wrapper = mount(BracketRounds, {
         props: { ...props, swipe: true },
         attachTo: document.body,
@@ -185,7 +174,10 @@ describe('BracketRounds', () => {
       expect(wrapper.findAll('.tv-hidden')).toHaveLength(0)
 
       // Свайпнули на второй раунд: первый уходит вместе со своей линией.
-      await swipeTo(wrapper, 390)
+      const root = wrapper.element as HTMLElement
+      Object.defineProperty(root, 'scrollLeft', { value: 390, configurable: true })
+      await wrapper.trigger('scroll')
+      await nextTick()
 
       expect(wrapper.findAll('.tv-hidden').map((n) => n.attributes('data-depth'))).toEqual(['2', '2'])
       expect(wrapper.emitted('round')![0]).toEqual([1])
@@ -203,8 +195,11 @@ describe('BracketRounds', () => {
       })
       await nextTick()
 
+      const root = wrapper.element as HTMLElement
       // Сдвинулись всего на 20 из 390 — первый раунд уже считается пройденным.
-      await swipeTo(wrapper, 20)
+      Object.defineProperty(root, 'scrollLeft', { value: 20, configurable: true })
+      await wrapper.trigger('scroll')
+      await nextTick()
 
       expect(wrapper.findAll('.tv-hidden').map((n) => n.attributes('data-depth'))).toEqual(['2'])
       expect(wrapper.emitted('round')![0]).toEqual([1])
@@ -218,120 +213,12 @@ describe('BracketRounds', () => {
       })
       await nextTick()
 
-      await swipeTo(wrapper, 390)
+      const root = wrapper.element as HTMLElement
+      Object.defineProperty(root, 'scrollLeft', { value: 390, configurable: true })
+      await wrapper.trigger('scroll')
+      await nextTick()
 
       expect(wrapper.findAll('.tv-hidden')).toHaveLength(0)
-    })
-
-    it('полоса лежит вне прокручиваемого блока — иначе её не прилепить', () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-
-      // Полоса и блок с сеткой — соседи, а не вложены друг в друга:
-      // sticky внутри элемента с overflow-x липнет к нему же, а не к экрану.
-      expect(wrapper.find('.tv-rounds__scroll .tv-rounds__head').exists()).toBe(false)
-      expect(wrapper.find('.tv-rounds__head .tv-rounds__bar').exists()).toBe(true)
-    })
-
-    it('якоря прилипания переехали в блок с сеткой — по одному на раунд', async () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-      await nextTick()
-
-      const anchors = wrapper.findAll('.tv-rounds__scroll .tv-rounds__snap-item')
-
-      expect(anchors).toHaveLength(rounds.length)
-      expect(anchors[0]!.attributes('style')).toContain('width: 390px')
-    })
-
-    it('свайп тянет полосу за сеткой', async () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-      await nextTick()
-      await swipeTo(wrapper, 390)
-
-      expect((wrapper.find('.tv-rounds__head').element as HTMLElement).scrollLeft).toBe(390)
-    })
-
-    it('инерция не уносит дальше соседнего раунда', async () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-      await nextTick()
-
-      const scroller = wrapper.find('.tv-rounds__scroll').element as HTMLElement
-      let scrollLeft = 0
-      Object.defineProperty(scroller, 'scrollLeft', {
-        get: () => scrollLeft,
-        set: (value: number) => {
-          scrollLeft = value
-        },
-        configurable: true,
-      })
-
-      // Инерция идёт подряд, по раунду за событие: именно так ограничитель
-      // «не больше одного раунда за событие» и пропускал свайп через всю сетку.
-      for (const left of [390, 780, 1170]) {
-        scrollLeft = left
-        scroller.dispatchEvent(new Event('scroll'))
-        await nextTick()
-      }
-
-      // Остановились на втором раунде, а не уехали в финал.
-      expect(wrapper.emitted('round')!.at(-1)).toEqual([1])
-      expect(scrollLeft).toBe(390)
-    })
-
-    it('резкий свайп не перепрыгивает через раунды', async () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-      await nextTick()
-
-      const scroller = wrapper.find('.tv-rounds__scroll').element as HTMLElement
-      let scrollLeft = 0
-      Object.defineProperty(scroller, 'scrollLeft', {
-        get: () => scrollLeft,
-        set: (value: number) => {
-          scrollLeft = value
-        },
-        configurable: true,
-      })
-
-      // Рывок из первого раунда сразу в финал: 2 × 390. Инерция успевает
-      // утащить ленту за кадр, scroll-snap-stop при этом не спасает.
-      scrollLeft = 780
-      await scroller.dispatchEvent(new Event('scroll'))
-      await nextTick()
-
-      // Остановились на соседнем раунде и подвинули ленту к его границе.
-      expect(wrapper.emitted('round')!.at(-1)).toEqual([1])
-      expect(scrollLeft).toBe(390)
-    })
-
-    it('клик по раунду едет сразу, ограничитель ему не мешает', async () => {
-      const wrapper = mount(BracketRounds, {
-        props: { ...props, swipe: true },
-        attachTo: document.body,
-      })
-      await nextTick()
-
-      const scroller = wrapper.find('.tv-rounds__scroll').element as HTMLElement
-      scroller.scrollTo = vi.fn()
-      Object.defineProperty(scroller, 'clientWidth', { value: 390, configurable: true })
-      Object.defineProperty(scroller, 'scrollWidth', { value: 1170, configurable: true })
-
-      await wrapper.findAll('.tv-rounds__item')[2]!.trigger('click')
-
-      expect(scroller.scrollTo).toHaveBeenCalled()
     })
 
     it('полоса не показана — свайпера нет', () => {

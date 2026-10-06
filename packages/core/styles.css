@@ -303,48 +303,12 @@
   min-width: 100%;
 }
 
-/* Слой с подписями раундов.
-
-   Лежит вне прокручиваемого блока и прилипает к верху экрана: раньше полоса
-   была внутри блока с `overflow-x`, а такой элемент — скролл-контейнер по обеим
-   осям, поэтому прилипать ей было не к чему и при вертикальном скролле она
-   уезжала вместе с сеткой. Сдвиг по горизонтали ей задаёт скрипт — тянет за
-   прокруткой сетки, поэтому своей полосы прокрутки у слоя нет. */
-.tv-rounds__head {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  overflow: hidden;
-  margin-bottom: var(--tv-rounds-gap);
-  background: var(--tv-rounds-bg);
-  border-bottom: var(--tv-rounds-border);
-}
-
 .tv-rounds__bar {
   display: flex;
   min-width: 100%;
-}
-
-/* Блок, который листают пальцем. На широком экране прокрутку даёт обёртка
-   вокруг компонента — здесь её нет, иначе сетку нельзя было бы перетаскивать. */
-.tv-rounds__scroll {
-  position: relative;
-}
-
-/* Якоря прилипания: подписи раундов уехали в отдельный слой, а снапиться
-   свайпу надо по чему-то внутри прокручиваемого блока. Нулевой высоты,
-   поэтому на раскладку не влияют. */
-.tv-rounds__snap {
-  display: flex;
-  /* Высота в пиксель, а не ноль: нулевую коробку часть браузеров не считает
-     областью прилипания. Отрицательный отступ возвращает её из раскладки. */
-  height: 1px;
-  margin-bottom: -1px;
-}
-
-.tv-rounds__snap-item {
-  flex: none;
-  display: block;
+  margin-bottom: var(--tv-rounds-gap);
+  background: var(--tv-rounds-bg);
+  border-bottom: var(--tv-rounds-border);
 }
 
 .tv-rounds__item {
@@ -385,21 +349,18 @@
 .tv-rounds--swipe {
   width: 100%;
   min-width: 0;
-}
-
-.tv-rounds--swipe .tv-rounds__scroll {
   overflow-x: auto;
-  /* Свайп внутри сетки не должен утягивать за собой страницу. */
+  /* Свайп внутри полосы не должен утягивать за собой страницу. */
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
 }
 
-.tv-rounds--swipe .tv-rounds__scroll::-webkit-scrollbar {
+.tv-rounds--swipe::-webkit-scrollbar {
   display: none;
 }
 
-.tv-rounds--swipe .tv-rounds__snap-item {
+.tv-rounds--swipe .tv-rounds__item {
   scroll-snap-align: start;
   /* Резкий свайп не должен перепрыгивать через раунд: останавливаемся на каждом. */
   scroll-snap-stop: always;
@@ -413,13 +374,12 @@
    и растворяется. При возврате назад разворачивается обратно.
 
    Видимость снимается только после того, как карточка ужалась, — поэтому
-   у неё отдельная задержка. */
-/* Возврат назад — сразу, без проявления. Раньше тут был такой же переход,
-   как на уходе, и раунд, в который ты свайпнул обратно, ещё 220 мс всплывал
-   из нуля: уход ощущался мгновенным, а возврат заметно медленнее. Уходу
-   анимация нужна (матч складывается у тебя на глазах), возврату — нет. */
+   у неё отдельная задержка. Селектор нарочно такой же длины, как у правила
+   ниже: иначе переход из него перебил бы этот и матч исчезал бы рывком. */
 .tv-rounds--swipe [data-depth] {
-  transition: none;
+  transition:
+    opacity var(--tv-rounds-fade, 220ms) ease,
+    transform var(--tv-rounds-fade, 220ms) var(--tv-rounds-collapse-ease);
 }
 
 .tv-rounds--swipe [data-depth].tv-hidden {

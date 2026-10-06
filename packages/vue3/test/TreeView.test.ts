@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { h, nextTick, ref, type Component } from 'vue'
+import { h, nextTick, type Component } from 'vue'
 import TreeViewComponent from '../src/TreeView.vue'
-import { ACTIVE_ROUND } from '../src/activeRound'
 
 /**
  * У компонента типизированные generic-пропсы; в тестах нам удобнее передавать
@@ -339,39 +338,5 @@ describe('TreeView — виртуализация', () => {
     expect(wrapper.find('.tree-view__canvas').attributes('style')).toContain('width: 23980px')
 
     restore()
-  })
-})
-
-describe('TreeView — высота по видимому раунду', () => {
-  /**
-   * Настройки свайпера: сетка растёт справа налево, уровни укладываются
-   * каждый от своей черты — ровно так её рисует BracketRounds на узком экране.
-   */
-  const swipeOptions = { ...options, direction: 'right-to-left' as const, levelLayout: 'stack' as const }
-
-  /** В свайпере BracketRounds кладёт номер раунда, который виден сейчас. */
-  function mountWithRound(round: number | null) {
-    return mount(TreeView, {
-      props: { data: bracket, options: swipeOptions, fitOnMount: false },
-      global: { provide: { [ACTIVE_ROUND as symbol]: ref(round) } },
-    })
-  }
-
-  it('виден первый раунд — холст по его двум карточкам', () => {
-    const style = mountWithRound(0).find('.tree-view__canvas').attributes('style')!
-
-    expect(style).toContain('height: 120px')
-  })
-
-  it('виден финал — холст высотой в одну карточку, а не во весь бракет', () => {
-    const style = mountWithRound(1).find('.tree-view__canvas').attributes('style')!
-
-    expect(style).toContain('height: 50px')
-  })
-
-  it('раунд не задан — высота по всей раскладке, как и было', () => {
-    const style = mountWithRound(null).find('.tree-view__canvas').attributes('style')!
-
-    expect(style).toContain('height: 120px')
   })
 })

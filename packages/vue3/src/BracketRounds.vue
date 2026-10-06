@@ -18,9 +18,8 @@
  * Что рисовать, решает `buildBracketRounds` из core, поэтому версия
  * для Vue 2 выглядит точно так же.
  */
-import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  afterScrollEnd,
   DEFAULT_OPTIONS,
   MOBILE_MEDIA_QUERY,
   buildBracketRounds,
@@ -45,7 +44,6 @@ import {
   type TreeNode,
   type TreeViewOptions,
 } from '@bigplay/tree-view-core'
-import { ACTIVE_ROUND } from './activeRound'
 
 const props = withDefaults(
   defineProps<{
@@ -83,10 +81,6 @@ const emit = defineEmits<{
 }>()
 
 const rootElement = ref<HTMLElement | null>(null)
-/** Слой с подписями раундов: прилипает к странице, прокручивается программно. */
-const headElement = ref<HTMLElement | null>(null)
-/** Блок, который листают пальцем: в нём сетка и якоря прилипания. */
-const scrollElement = ref<HTMLElement | null>(null)
 const contentElement = ref<HTMLElement | null>(null)
 
 /** Узкий ли экран. До монтирования — нет: на сервере ширину знать неоткуда. */
@@ -154,16 +148,6 @@ const gridOptions = computed<Partial<TreeViewOptions>>(() =>
     : { ...props.options },
 )
 
-/**
- * Раунд, который виден сейчас, — забирает TreeView в слоте, чтобы держать
- * высоту холста по нему. Вне свайпера раунд не ограничивает ничего: там видна
- * вся сетка целиком, и высота должна считаться по всей раскладке.
- */
-provide(
-  ACTIVE_ROUND,
-  computed(() => (isSwipe.value ? current.value : null)),
-)
-
 const barStyle = computed(() => ({ width: `${model.value.width}px` }))
 
 const contentStyle = computed(() =>
@@ -181,65 +165,12 @@ function applyHidden(): void {
   hideRoundsBefore(content, hideBefore, (depth) => roundOfDepth(depth, count, mirrored.value))
 }
 
-/**
- * Идёт прокрутка, которую запустили мы сами (клик по раунду).
- * Ограничитель ниже её не трогает: туда и надо приехать за один раз.
- */
-let programmatic = false
-
-/** Раунд, на котором прокрутка остановилась в прошлый раз. */
-let anchor = 0
-/** Ждём ли мы сейчас, когда прокрутка замрёт. */
-let settling = false
-
-/**
- * Один свайп — один раунд.
- *
- * Пока прокрутка не остановилась, дальше соседнего от `anchor` раунда не
- * пускаем: иначе резкий свайп уносит инерцией через всю сетку. Ограничивать
- * шаг между соседними событиями бесполезно — при инерции они приходят подряд
- * по одному раунду, и каждый шаг сам по себе выглядит законным.
- */
-function settleAt(element: HTMLElement): void {
-  if (settling) return
-
-  settling = true
-  afterScrollEnd(element, () => {
-    settling = false
-    anchor = current.value
-  })
-}
-
 function onScroll(): void {
-  const element = scrollElement.value
+  const element = rootElement.value
   if (!element || !isSwipe.value) return
 
-  // Полоса едет за сеткой: она в отдельном слое и своей прокрутки не имеет.
-  if (headElement.value) headElement.value.scrollLeft = element.scrollLeft
-
   const width = model.value.columns[0]?.width ?? 0
-  let next = roundAtScroll(element.scrollLeft, width, model.value.columns.length)
-
-  /*
-   * Резкий свайп не должен проскакивать раунды.
-   *
-   * На это стоит `scroll-snap-stop: always`, но при инерции он спасает не
-   * всегда: событий прокрутки за кадр приходит мало, и палец успевает утащить
-   * ленту через несколько раундов раньше, чем браузер решит прилипнуть, —
-   * из первого раунда попадаешь сразу в третий. Останавливаем сами: от точки,
-   * где свайп начался, не дальше соседнего раунда, пока прокрутка не замрёт.
-   */
-  if (!programmatic && width > 0) {
-    const limited = Math.min(Math.max(next, anchor - 1), anchor + 1)
-
-    if (limited !== next) {
-      next = limited
-      element.scrollLeft = next * width
-    }
-
-    settleAt(element)
-  }
-
+  const next = roundAtScroll(element.scrollLeft, width, model.value.columns.length)
   if (next === current.value) return
 
   current.value = next
@@ -280,8 +211,8 @@ function scrollToRound(column: BracketRoundColumn): void {
   const element = rootElement.value
   if (!element) return
 
-  // В свайпере прокручивается блок с сеткой, иначе — блок с overflow-x вокруг.
-  const container = isSwipe.value ? scrollElement.value : findScrollParent(element)
+  // В свайпере прокручивается сама полоса, иначе — блок с overflow-x вокруг неё.
+  const container = isSwipe.value ? element : findScrollParent(element)
   if (!container) return
 
   const content = contentElement.value
@@ -294,9 +225,6 @@ function scrollToRound(column: BracketRoundColumn): void {
     ? horizontalBox(card, container)
     : { left: offsetWithin(element, container) + column.index * column.width, width: column.width }
 
-  // Прокрутка по клику едет сразу к нужному раунду — ограничитель «не дальше
-  // соседнего» для неё выключаем, иначе из финала в первый раунд не попасть.
-  programmatic = true
   smoothScrollLeft(
     container,
     roundScrollLeft({
@@ -305,11 +233,6 @@ function scrollToRound(column: BracketRoundColumn): void {
       scrollWidth: container.scrollWidth,
     }),
   )
-  // Плавная прокрутка идёт несколько кадров; снимаем флаг, когда она кончилась.
-  afterScrollEnd(container, () => {
-    programmatic = false
-    anchor = current.value
-  })
 }
 
 function onSelect(column: BracketRoundColumn): void {
@@ -321,50 +244,30 @@ defineExpose({ scrollToRound })
 </script>
 
 <template>
-  <div ref="rootElement" class="tv-rounds" :class="{ 'tv-rounds--swipe': isSwipe }">
-    <!--
-      Полоса лежит ВНЕ прокручиваемого блока — иначе её не прилепить к странице:
-      элемент с `overflow-x` становится скролл-контейнером по обеим осям, и
-      `position: sticky` внутри него липнет к нему же, а не к экрану. Поэтому
-      полоса своим слоем, сетка своим, а горизонтальную прокрутку мы между ними
-      синхронизируем.
-    -->
-    <div v-if="isShow" ref="headElement" class="tv-rounds__head">
-      <div class="tv-rounds__bar" :style="barStyle">
-        <div
-          v-for="column in model.columns"
-          :key="column.key"
-          class="tv-rounds__item"
-          :style="{ width: `${column.width}px` }"
-          @click="onSelect(column)"
-        >
-          <slot name="round" :round="column">{{ column.name }}</slot>
-        </div>
+  <div
+    ref="rootElement"
+    class="tv-rounds"
+    :class="{ 'tv-rounds--swipe': isSwipe }"
+    @scroll="onScroll"
+  >
+    <div v-if="isShow" class="tv-rounds__bar" :style="barStyle">
+      <div
+        v-for="column in model.columns"
+        :key="column.key"
+        class="tv-rounds__item"
+        :style="{ width: `${column.width}px` }"
+        @click="onSelect(column)"
+      >
+        <slot name="round" :round="column">{{ column.name }}</slot>
       </div>
     </div>
 
-    <div ref="scrollElement" class="tv-rounds__scroll" @scroll="onScroll">
+    <div ref="contentElement" class="tv-rounds__content" :style="contentStyle">
       <!--
-        Точки прилипания раньше висели на подписях раундов, а они уехали из
-        прокручиваемого блока. Здесь их заменяют невидимые якоря той же ширины:
-        свайп по-прежнему останавливается ровно на границе раунда.
+        Сюда кладут саму сетку. `options` — настройки, подогнанные под экран:
+        в свайпере раунд занимает всю ширину, а матчи внутри стоят ближе.
       -->
-      <div v-if="isSwipe" class="tv-rounds__snap" :style="barStyle" aria-hidden="true">
-        <i
-          v-for="column in model.columns"
-          :key="column.key"
-          class="tv-rounds__snap-item"
-          :style="{ width: `${column.width}px` }"
-        />
-      </div>
-
-      <div ref="contentElement" class="tv-rounds__content" :style="contentStyle">
-        <!--
-          Сюда кладут саму сетку. `options` — настройки, подогнанные под экран:
-          в свайпере раунд занимает всю ширину, а матчи внутри стоят ближе.
-        -->
-        <slot :options="gridOptions" :is-swipe="isSwipe" :round="current" />
-      </div>
+      <slot :options="gridOptions" :is-swipe="isSwipe" :round="current" />
     </div>
   </div>
 </template>
