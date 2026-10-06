@@ -46,6 +46,31 @@ export const teams: ApiTeam[] = [
   { id: 6, name: 'Slime And Girl' },
   { id: 7, name: 'weakness' },
   { id: 8, name: 'Unravel Her' },
+  // Дальше — только для большой сетки (singleGrid): 32 команды, пять раундов.
+  { id: 9, name: 'Nocturne' },
+  { id: 10, name: 'Pale Horse' },
+  { id: 11, name: 'Gravity Well' },
+  { id: 12, name: 'Soft Reset' },
+  { id: 13, name: 'Kaidan' },
+  { id: 14, name: 'Lowlight' },
+  { id: 15, name: 'Myrrh' },
+  { id: 16, name: 'Vesper' },
+  { id: 17, name: 'Blackout Sun' },
+  { id: 18, name: 'Orchid Nine' },
+  { id: 19, name: 'Cold Signal' },
+  { id: 20, name: 'Hanabi' },
+  { id: 21, name: 'Rust & Rue' },
+  { id: 22, name: 'Quiet Riot' },
+  { id: 23, name: 'Tenebris' },
+  { id: 24, name: 'Half Measure' },
+  { id: 25, name: 'Sable' },
+  { id: 26, name: 'Northwind' },
+  { id: 27, name: 'Ash Parade' },
+  { id: 28, name: 'Velvet Crow' },
+  { id: 29, name: 'Fathom' },
+  { id: 30, name: 'Lantern' },
+  { id: 31, name: 'Saltwater' },
+  { id: 32, name: 'Dead Reckoning' },
 ]
 
 /** id команд, которые считаются «моими» — их пара подсвечивается в сетке. */
@@ -125,3 +150,55 @@ export const lowerGrid: ApiGrid = {
     pending(6583, 13, null),
   ],
 }
+
+/**
+ * Большая сетка: 32 команды, пять раундов.
+ *
+ * Нужна для проверок, которым мало трёх раундов: прилипание полосы раундов
+ * видно только тогда, когда сетка выше экрана, а поведение свайпа — когда
+ * раундов больше, чем влезает.
+ *
+ * Собирается кодом, а не руками: пары идут по порядку, дальше всегда проходит
+ * команда с меньшим id — какие именно, тут не важно, важен размер.
+ */
+function buildSingleGrid(): ApiGrid {
+  const names = ['1/16 финала', '1/8 финала', '1/4 финала', '1/2 финала', 'Финал']
+  const rounds: ApiRound[] = names.map((name, index) => ({ id: index + 1, name }))
+  const matches: ApiMatch[] = []
+
+  let participants = Array.from({ length: 32 }, (_, index) => index + 1)
+  let matchId = 7001
+
+  rounds.forEach((round, roundIndex) => {
+    const winners: number[] = []
+    const isFinal = roundIndex === rounds.length - 1
+    // Матчи следующего раунда идут подряд сразу за матчами текущего.
+    const nextRoundStart = matchId + participants.length / 2
+
+    participants.forEach((home, index) => {
+      if (index % 2 === 1) return
+
+      const away = participants[index + 1]!
+      const winner = Math.min(home, away)
+      const next = isFinal ? null : nextRoundStart + Math.floor(index / 4)
+
+      matches.push(
+        played(
+          matchId++,
+          round.id,
+          next,
+          [home, winner === home ? 2 : 1],
+          [away, winner === away ? 2 : 1],
+        ),
+      )
+      winners.push(winner)
+    })
+
+    participants = winners
+  })
+
+  return { rounds, matches }
+}
+
+/** Single elimination в песочнице: 32 команды. */
+export const singleGrid: ApiGrid = buildSingleGrid()

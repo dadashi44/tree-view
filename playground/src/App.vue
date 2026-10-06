@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import BracketGrid from './components/BracketGrid.vue'
 import BountyGrid from './components/BountyGrid.vue'
 import StressGrid from './components/StressGrid.vue'
-import { lowerGrid, upperGrid } from './data/tournament'
+import { lowerGrid, singleGrid, upperGrid } from './data/tournament'
 import { bountyGrid } from './data/bounty'
 import type { BracketMatch, BracketTeam } from './data/buildBracket'
 import type { BountyNode, BountyNodeTeam } from './data/buildBounty'
@@ -85,8 +85,8 @@ function onGroupSelect(node: BountyNode, team: BountyNodeTeam) {
     <!-- Single elimination: одна сетка. -->
     <BracketGrid
       v-if="gridType === 'single'"
-      title="Основная сетка"
-      :grid="upperGrid"
+      title="Основная сетка — 32 команды, пять раундов"
+      :grid="singleGrid"
       :format="format"
       :interactive="interactive"
       @select="onMatchSelect"

@@ -1,4 +1,5 @@
 import { clamp } from './viewport'
+import type { LayoutNode } from './types'
 
 /**
  * Полоса раундов над турнирной сеткой.
@@ -153,3 +154,34 @@ export function roundSiblingGap(count: number, base: number): number {
  * свой длинный хвост.
  */
 export const SWIPE_ELBOW_OFFSET = 20
+
+/**
+ * Высота содержимого одного раунда — по самой нижней карточке в нём.
+ *
+ * Нужна свайперу: там виден один раунд, а высота холста считается по всей
+ * раскладке, то есть по самому населённому раунду. Из-за этого под финалом
+ * с единственной ячейкой оставалась пустота до конца сетки.
+ *
+ * Считается по оси Y, потому что свайпер включается только для горизонтальных
+ * сеток (`right-to-left` и `left-to-right`): в вертикальных раунды идут
+ * сверху вниз и прятать их по горизонтали нечего.
+ *
+ * Раскладка `levelLayout: 'stack'`, на которой работает свайпер, начинает
+ * каждый уровень от нуля, поэтому ограничить высоту достаточно — карточки
+ * и так стоят сверху, переставлять их не нужно.
+ */
+export function roundContentHeight<T>(
+  nodes: ReadonlyArray<LayoutNode<T>>,
+  round: number,
+  rounds: number,
+  mirrored: boolean,
+): number {
+  let height = 0
+
+  for (const node of nodes) {
+    if (roundOfDepth(node.depth, rounds, mirrored) !== round) continue
+    height = Math.max(height, node.y + node.height)
+  }
+
+  return height
+}

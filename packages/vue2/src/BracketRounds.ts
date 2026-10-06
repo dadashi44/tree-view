@@ -1,5 +1,6 @@
 import Vue, { type PropType, type VNode } from 'vue'
 import {
+  afterScrollEnd,
   DEFAULT_OPTIONS,
   MOBILE_MEDIA_QUERY,
   buildBracketRounds,
@@ -25,6 +26,19 @@ import {
   type TreeNode,
   type TreeViewOptions,
 } from '@bigplay/tree-view-core'
+
+/**
+ * Компоненты, у которых сейчас идёт прокрутка по клику на раунд.
+ *
+ * Не в `data`: реактивность флагу не нужна, а в options-api лишнее поле ломает
+ * вывод типов у `this` в методах. Тот же приём, что у контроллеров в TreeView.
+ */
+const programmatic = new WeakSet<Vue>()
+
+/** Раунд, на котором прокрутка остановилась в прошлый раз. */
+const anchors = new WeakMap<Vue, number>()
+/** Компоненты, у которых мы ждём, когда прокрутка замрёт. */
+const settling = new WeakSet<Vue>()
 
 /**
  * Полоса раундов для Vue 2. Разметка и классы один в один как в Vue 3 —
@@ -159,6 +173,20 @@ export default Vue.extend({
     this.stop.forEach((off) => off())
   },
 
+  provide(): Record<string, unknown> {
+    // Vue 2 не умеет реактивный provide — отдаём объект, у которого геттер
+    // всегда возвращает свежее значение. TreeView читает его как .value.
+    const self = this as unknown as { isSwipe: boolean; current: number }
+
+    return {
+      activeRound: {
+        get value(): number | null {
+          return self.isSwipe ? self.current : null
+        },
+      },
+    }
+  },
+
   methods: {
     /** Прячет всё, что осталось позади: карточки пройденных раундов и их линии. */
     applyHidden(): void {
@@ -174,11 +202,44 @@ export default Vue.extend({
     },
 
     onScroll(): void {
-      const element = this.$el as HTMLElement | null
+      const element = this.$refs.scroll as HTMLElement | undefined
       if (!element || !this.isSwipe) return
 
+      // Полоса едет за сеткой: она в отдельном слое и своей прокрутки не имеет.
+      const head = this.$refs.head as HTMLElement | undefined
+      if (head) head.scrollLeft = element.scrollLeft
+
       const width = this.model.columns[0]?.width ?? 0
-      const next = roundAtScroll(element.scrollLeft, width, this.model.columns.length)
+      let next = roundAtScroll(element.scrollLeft, width, this.model.columns.length)
+
+      /*
+       * Резкий свайп не должен проскакивать раунды.
+       *
+       * На это стоит `scroll-snap-stop: always`, но при инерции он спасает не
+       * всегда: событий прокрутки за кадр приходит мало, и палец успевает утащить
+       * ленту через несколько раундов раньше, чем браузер решит прилипнуть.
+       */
+      if (!programmatic.has(this) && width > 0) {
+        const anchor = anchors.get(this) ?? 0
+        const limited = Math.min(Math.max(next, anchor - 1), anchor + 1)
+
+        if (limited !== next) {
+          next = limited
+          element.scrollLeft = next * width
+        }
+
+        // Один свайп — один раунд: пока прокрутка не замрёт, точка отсчёта
+        // не двигается. Ограничивать шаг между событиями бесполезно — при
+        // инерции они приходят подряд по одному раунду.
+        if (!settling.has(this)) {
+          settling.add(this)
+          afterScrollEnd(element, () => {
+            settling.delete(this)
+            anchors.set(this, this.current)
+          })
+        }
+      }
+
       if (next === this.current) return
 
       this.current = next
@@ -198,8 +259,10 @@ export default Vue.extend({
       const element = this.$el as HTMLElement | null
       if (!element) return
 
-      // В свайпере прокручивается сама полоса, иначе — блок с overflow-x вокруг неё.
-      const container = this.isSwipe ? element : findScrollParent(element)
+      // В свайпере прокручивается блок с сеткой, иначе — блок с overflow-x вокруг.
+      const container = this.isSwipe
+        ? ((this.$refs.scroll as HTMLElement | undefined) ?? null)
+        : findScrollParent(element)
       if (!container) return
 
       const content = this.$refs.content as HTMLElement | undefined
@@ -215,6 +278,9 @@ export default Vue.extend({
             width: column.width,
           }
 
+      // Прокрутка по клику едет сразу к нужному раунду — ограничитель «не дальше
+      // соседнего» для неё выключаем, иначе из финала в первый раунд не попасть.
+      programmatic.add(this)
       smoothScrollLeft(
         container,
         roundScrollLeft({
@@ -223,6 +289,10 @@ export default Vue.extend({
           scrollWidth: container.scrollWidth,
         }),
       )
+      afterScrollEnd(container, () => {
+        programmatic.delete(this)
+        anchors.set(this, this.current)
+      })
     },
 
     onSelect(column: BracketRoundColumn): void {
@@ -247,13 +317,18 @@ export default Vue.extend({
   render(h): VNode {
     const children: VNode[] = []
 
+    // Полоса лежит ВНЕ прокручиваемого блока — иначе её не прилепить к странице:
+    // элемент с `overflow-x` становится скролл-контейнером по обеим осям, и
+    // `position: sticky` внутри него липнет к нему же, а не к экрану.
     if (this.isShow) {
       children.push(
-        h(
-          'div',
-          { class: 'tv-rounds__bar', style: { width: `${this.model.width}px` } },
-          this.model.columns.map((column) => this.renderColumn(h, column)),
-        ),
+        h('div', { ref: 'head', class: 'tv-rounds__head' }, [
+          h(
+            'div',
+            { class: 'tv-rounds__bar', style: { width: `${this.model.width}px` } },
+            this.model.columns.map((column) => this.renderColumn(h, column)),
+          ),
+        ]),
       )
     }
 
@@ -266,7 +341,31 @@ export default Vue.extend({
         round: this.current,
       }) ?? this.$slots.default
 
-    children.push(
+    const inner: VNode[] = []
+
+    // Точки прилипания раньше висели на подписях раундов, а они уехали из
+    // прокручиваемого блока. Здесь их заменяют невидимые якоря той же ширины.
+    if (this.isSwipe) {
+      inner.push(
+        h(
+          'div',
+          {
+            class: 'tv-rounds__snap',
+            style: { width: `${this.model.width}px` },
+            attrs: { 'aria-hidden': 'true' },
+          },
+          this.model.columns.map((column) =>
+            h('i', {
+              key: column.key,
+              class: 'tv-rounds__snap-item',
+              style: { width: `${column.width}px` },
+            }),
+          ),
+        ),
+      )
+    }
+
+    inner.push(
       h(
         'div',
         {
@@ -278,13 +377,18 @@ export default Vue.extend({
       ),
     )
 
-    return h(
-      'div',
-      {
-        class: ['tv-rounds', { 'tv-rounds--swipe': this.isSwipe }],
-        on: { scroll: () => this.onScroll() },
-      },
-      children,
+    children.push(
+      h(
+        'div',
+        {
+          ref: 'scroll',
+          class: 'tv-rounds__scroll',
+          on: { scroll: () => this.onScroll() },
+        },
+        inner,
+      ),
     )
+
+    return h('div', { class: ['tv-rounds', { 'tv-rounds--swipe': this.isSwipe }] }, children)
   },
 })
