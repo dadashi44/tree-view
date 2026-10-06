@@ -187,6 +187,29 @@ function applyHidden(): void {
  */
 let programmatic = false
 
+/** Раунд, на котором прокрутка остановилась в прошлый раз. */
+let anchor = 0
+/** Ждём ли мы сейчас, когда прокрутка замрёт. */
+let settling = false
+
+/**
+ * Один свайп — один раунд.
+ *
+ * Пока прокрутка не остановилась, дальше соседнего от `anchor` раунда не
+ * пускаем: иначе резкий свайп уносит инерцией через всю сетку. Ограничивать
+ * шаг между соседними событиями бесполезно — при инерции они приходят подряд
+ * по одному раунду, и каждый шаг сам по себе выглядит законным.
+ */
+function settleAt(element: HTMLElement): void {
+  if (settling) return
+
+  settling = true
+  afterScrollEnd(element, () => {
+    settling = false
+    anchor = current.value
+  })
+}
+
 function onScroll(): void {
   const element = scrollElement.value
   if (!element || !isSwipe.value) return
@@ -203,12 +226,18 @@ function onScroll(): void {
    * На это стоит `scroll-snap-stop: always`, но при инерции он спасает не
    * всегда: событий прокрутки за кадр приходит мало, и палец успевает утащить
    * ленту через несколько раундов раньше, чем браузер решит прилипнуть, —
-   * из финала попадаешь сразу в первый раунд. Поэтому останавливаем сами:
-   * дальше соседнего раунда за один заход не пускаем.
+   * из первого раунда попадаешь сразу в третий. Останавливаем сами: от точки,
+   * где свайп начался, не дальше соседнего раунда, пока прокрутка не замрёт.
    */
-  if (!programmatic && width > 0 && Math.abs(next - current.value) > 1) {
-    next = current.value + Math.sign(next - current.value)
-    element.scrollLeft = next * width
+  if (!programmatic && width > 0) {
+    const limited = Math.min(Math.max(next, anchor - 1), anchor + 1)
+
+    if (limited !== next) {
+      next = limited
+      element.scrollLeft = next * width
+    }
+
+    settleAt(element)
   }
 
   if (next === current.value) return
@@ -279,6 +308,7 @@ function scrollToRound(column: BracketRoundColumn): void {
   // Плавная прокрутка идёт несколько кадров; снимаем флаг, когда она кончилась.
   afterScrollEnd(container, () => {
     programmatic = false
+    anchor = current.value
   })
 }
 

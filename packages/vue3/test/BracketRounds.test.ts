@@ -259,6 +259,36 @@ describe('BracketRounds', () => {
       expect((wrapper.find('.tv-rounds__head').element as HTMLElement).scrollLeft).toBe(390)
     })
 
+    it('инерция не уносит дальше соседнего раунда', async () => {
+      const wrapper = mount(BracketRounds, {
+        props: { ...props, swipe: true },
+        attachTo: document.body,
+      })
+      await nextTick()
+
+      const scroller = wrapper.find('.tv-rounds__scroll').element as HTMLElement
+      let scrollLeft = 0
+      Object.defineProperty(scroller, 'scrollLeft', {
+        get: () => scrollLeft,
+        set: (value: number) => {
+          scrollLeft = value
+        },
+        configurable: true,
+      })
+
+      // Инерция идёт подряд, по раунду за событие: именно так ограничитель
+      // «не больше одного раунда за событие» и пропускал свайп через всю сетку.
+      for (const left of [390, 780, 1170]) {
+        scrollLeft = left
+        scroller.dispatchEvent(new Event('scroll'))
+        await nextTick()
+      }
+
+      // Остановились на втором раунде, а не уехали в финал.
+      expect(wrapper.emitted('round')!.at(-1)).toEqual([1])
+      expect(scrollLeft).toBe(390)
+    })
+
     it('резкий свайп не перепрыгивает через раунды', async () => {
       const wrapper = mount(BracketRounds, {
         props: { ...props, swipe: true },

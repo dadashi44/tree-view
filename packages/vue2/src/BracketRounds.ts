@@ -35,6 +35,11 @@ import {
  */
 const programmatic = new WeakSet<Vue>()
 
+/** Раунд, на котором прокрутка остановилась в прошлый раз. */
+const anchors = new WeakMap<Vue, number>()
+/** Компоненты, у которых мы ждём, когда прокрутка замрёт. */
+const settling = new WeakSet<Vue>()
+
 /**
  * Полоса раундов для Vue 2. Разметка и классы один в один как в Vue 3 —
  * колонки считает та же функция из core, стили общие.
@@ -214,9 +219,25 @@ export default Vue.extend({
        * всегда: событий прокрутки за кадр приходит мало, и палец успевает утащить
        * ленту через несколько раундов раньше, чем браузер решит прилипнуть.
        */
-      if (!programmatic.has(this) && width > 0 && Math.abs(next - this.current) > 1) {
-        next = this.current + Math.sign(next - this.current)
-        element.scrollLeft = next * width
+      if (!programmatic.has(this) && width > 0) {
+        const anchor = anchors.get(this) ?? 0
+        const limited = Math.min(Math.max(next, anchor - 1), anchor + 1)
+
+        if (limited !== next) {
+          next = limited
+          element.scrollLeft = next * width
+        }
+
+        // Один свайп — один раунд: пока прокрутка не замрёт, точка отсчёта
+        // не двигается. Ограничивать шаг между событиями бесполезно — при
+        // инерции они приходят подряд по одному раунду.
+        if (!settling.has(this)) {
+          settling.add(this)
+          afterScrollEnd(element, () => {
+            settling.delete(this)
+            anchors.set(this, this.current)
+          })
+        }
       }
 
       if (next === this.current) return
@@ -270,6 +291,7 @@ export default Vue.extend({
       )
       afterScrollEnd(container, () => {
         programmatic.delete(this)
+        anchors.set(this, this.current)
       })
     },
 
