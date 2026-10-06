@@ -22,6 +22,7 @@ export {
   MAX_GAP_STEPS,
   SWIPE_ELBOW_OFFSET,
   roundAtScroll,
+  roundContentHeight,
   roundOfDepth,
   roundScrollLeft,
   type BracketRound,
@@ -31,6 +32,7 @@ export {
   type RoundScrollBox,
 } from './rounds'
 export {
+  afterScrollEnd,
   findScrollParent,
   smoothScrollLeft,
   offsetWithin,

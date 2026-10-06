@@ -6,6 +6,8 @@ import {
   layoutTree,
   measureVisibleRect,
   PanZoomController,
+  resolveOptions,
+  roundContentHeight,
   toCssTransform,
   toggleCollapsed,
   toTree,
@@ -86,6 +88,11 @@ export default Vue.extend({
     }
   },
 
+  inject: {
+    // Кладёт BracketRounds. Сетка может стоять и сама по себе — тогда undefined.
+    activeRound: { default: null },
+  },
+
   computed: {
     layout(): Layout<NodeData> {
       const tree = toTree<NodeData>(this.data, {
@@ -102,10 +109,33 @@ export default Vue.extend({
       return this.virtualize ? visibleLayout(this.layout, this.visibleRect, this.overscan) : this.layout
     },
 
+    /**
+     * Высота холста.
+     *
+     * Обычно — по всей раскладке. В свайпере виден один раунд, и высота берётся
+     * по нему: иначе финал с одной ячейкой держит высоту самого населённого
+     * раунда и под ним остаётся пустота. Номер раунда кладёт BracketRounds.
+     */
+    canvasHeight(): number {
+      // Vue 2 не выводит типы инъекций — достаём явно.
+      const injected = (this as unknown as { activeRound?: { value: number | null } }).activeRound
+      const round = injected?.value ?? null
+      if (round === null) return this.layout.height
+
+      const rounds = this.layout.nodes.reduce((max, node) => Math.max(max, node.depth), 0) + 1
+      const direction = resolveOptions(this.options).direction
+      const mirrored = direction === 'right-to-left' || direction === 'bottom-to-top'
+      const height = roundContentHeight(this.layout.nodes, round, rounds, mirrored)
+
+      // Раунда с таким номером в раскладке нет — держим прежнюю высоту,
+      // чтобы сетка не прыгнула в ноль.
+      return height || this.layout.height
+    },
+
     canvasStyle(): Record<string, string> {
       return {
         width: `${this.layout.width}px`,
-        height: `${this.layout.height}px`,
+        height: `${this.canvasHeight}px`,
         transform: toCssTransform(this.transform),
       }
     },
@@ -115,7 +145,7 @@ export default Vue.extend({
 
       return {
         width: `${this.layout.width * this.transform.scale}px`,
-        height: `${this.layout.height * this.transform.scale}px`,
+        height: `${this.canvasHeight * this.transform.scale}px`,
         overflow: 'visible',
       }
     },
